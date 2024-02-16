@@ -174,6 +174,34 @@ void rotateTetromino(int shape[4][4]) {
     }
 }
 
+void lockTetrominoAndUpdateBoard(Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int *score) {
+    // Lock the current tetromino on the board
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            if (curent->shape[i][j] == 1) {
+                int y = curent->y + i;
+                int x = curent->x + j;
+                if (y >= 0 && y < BOARD_HEIGHT && x >= 0 && x < BOARD_WIDTH) {
+                    board[y][x] = 1; // Mark the cell as filled
+                }
+            }
+        }
+    }
+
+    // Check for complete lines and update the board and score accordingly
+    int linesCleared = checkCompleteLines(board, BOARD_HEIGHT, BOARD_WIDTH);
+    *score += calculateScore(linesCleared); // Update score based on the lines cleared
+}
+
+void hardDropTetromino(Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH) {
+    int dropDistance = 0;
+    while (isMoveValid(*curent, board, curent->x, curent->y + dropDistance + 1, BOARD_HEIGHT, BOARD_WIDTH)) {
+        dropDistance++;
+    }
+
+    curent->y += dropDistance;
+}
+
 bool handleUserInput(int press, Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH) {
     int dirX = 0, dirY = 0;
 
@@ -196,6 +224,11 @@ bool handleUserInput(int press, Tetromino *curent, int **board, int BOARD_HEIGHT
                 rotateTetromino(curent->shape);
                 rotateTetromino(curent->shape);
             }
+            break;
+        case ' ':
+            hardDropTetromino(curent, board, BOARD_HEIGHT, BOARD_WIDTH);
+
+            lockTetrominoAndUpdateBoard(curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score);
             break;
         default:
             break;
@@ -242,25 +275,6 @@ void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int s
     wrefresh(win);
 }
 
-void lockTetrominoAndUpdateBoard(Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int *score) {
-    // Lock the current tetromino on the board
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            if (curent->shape[i][j] == 1) {
-                int y = curent->y + i;
-                int x = curent->x + j;
-                if (y >= 0 && y < BOARD_HEIGHT && x >= 0 && x < BOARD_WIDTH) {
-                    board[y][x] = 1; // Mark the cell as filled
-                }
-            }
-        }
-    }
-
-    // Check for complete lines and update the board and score accordingly
-    int linesCleared = checkCompleteLines(board, BOARD_HEIGHT, BOARD_WIDTH);
-    *score += calculateScore(linesCleared); // Update score based on the lines cleared
-}
-
 bool spawnNewTetromino(Tetromino *current, Tetromino tetrominoes[], int **board, int BOARD_HEIGHT, int BOARD_WIDTH) {
     // Generate a random index for the next tetromino
     int randomIndex = rand() % 7;
@@ -283,6 +297,16 @@ int main() {
     timeout(0);
     box(win, 0, 0);
     wrefresh(win);
+
+    // start color functionality
+	start_color();
+	if (!has_colors()) {
+		endwin();
+		fprintf(stderr, "Error: colors");
+		exit(1);
+	}
+    init_pair(1, COLOR_WHITE, COLOR_BLACK); // Backgroung
+    //wbkgd(win, COLOR_PAIR(1));
 
     // Get terminal dimensions
     int screen_height, screen_width;
@@ -352,6 +376,5 @@ int main() {
         (BOARD_HEIGHT = screen_height \ 
          BOARD_WIDTH = variabil i guess)
     7. Cu timpul sa devina mai greu
-   *8. space = teleport jos
 
 */

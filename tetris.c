@@ -202,7 +202,38 @@ void hardDropTetromino(Tetromino *curent, int **board, int BOARD_HEIGHT, int BOA
     curent->y += dropDistance;
 }
 
-bool handleUserInput(int press, Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH) {
+void calculateGhostPosition(Tetromino *current, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, Tetromino *ghost) {
+    *ghost = *current; // Copy the current tetromino to the ghost
+
+    // Find the maximum distance the tetromino can move down without collision
+    int dropDistance = 0;
+    while (isMoveValid(*ghost, board, ghost->x, ghost->y + dropDistance + 1, BOARD_HEIGHT, BOARD_WIDTH)) {
+        dropDistance++;
+    }
+
+    // Update the ghost's position
+    ghost->y += dropDistance;
+}
+
+void drawGhostPiece(WINDOW *win, Tetromino ghost) {
+    wattron(win, A_DIM); // Make the ghost less visible
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            if (ghost.shape[i][j] == 1) {
+                // Calculate the screen position based on the ghost's position
+                int y = ghost.y + i + 1;
+                int x = ghost.x + j + 1;
+
+                // Draw the contour of the square (ghost piece part)
+                mvwaddch(win, y, x, ACS_CKBOARD);
+            }
+        }
+    }
+    wattroff(win, A_DIM); // Turn off the dim attribute
+}
+
+bool handleUserInput(int press, Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, Tetromino *ghost) {
     int dirX = 0, dirY = 0;
 
     switch (press) {
@@ -217,18 +248,24 @@ bool handleUserInput(int press, Tetromino *curent, int **board, int BOARD_HEIGHT
             break;
         case KEY_UP:
             rotateTetromino(curent->shape); // Rotate
+            calculateGhostPosition(curent, board, BOARD_HEIGHT, BOARD_WIDTH, ghost);
+
 
             if (!isMoveValid(*curent, board, curent->x, curent->y, BOARD_HEIGHT, BOARD_WIDTH)) {
                 // If rotation is not valid, rotate back to original position
                 rotateTetromino(curent->shape); // Rotate 3 more times to revert
                 rotateTetromino(curent->shape);
                 rotateTetromino(curent->shape);
+                calculateGhostPosition(curent, board, BOARD_HEIGHT, BOARD_WIDTH, ghost);
+
             }
             break;
         case ' ':
             hardDropTetromino(curent, board, BOARD_HEIGHT, BOARD_WIDTH);
 
             lockTetrominoAndUpdateBoard(curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score);
+
+            
             break;
         default:
             break;
@@ -241,15 +278,18 @@ bool handleUserInput(int press, Tetromino *curent, int **board, int BOARD_HEIGHT
     if (isMoveValid(*curent, board, curent->x + dirX, curent->y + dirY, BOARD_HEIGHT, BOARD_WIDTH)) {
         curent->x += dirX;
         curent->y += dirY;
+
+        calculateGhostPosition(curent, board, BOARD_HEIGHT, BOARD_WIDTH, ghost);
     }
 
     return true;
 }
 
-void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int score, Tetromino curent) {
+void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int score, Tetromino curent, Tetromino *ghost) {
     // Clear the window for fresh drawing
     werase(win);
     drawBordersAndScore(win, BOARD_WIDTH + 2, BOARD_HEIGHT + 2);
+    drawGhostPiece(win, *ghost);
 
     // Draw the board with locked tetrominoes
     for (int y = 0; y < BOARD_HEIGHT; y++) {
@@ -287,6 +327,7 @@ bool spawnNewTetromino(Tetromino *current, Tetromino tetrominoes[], int **board,
     // Check if the new tetromino can be placed without colliding
     return isMoveValid(*current, board, current->x, current->y, BOARD_HEIGHT, BOARD_WIDTH);
 }
+
 
 int main() {
     // Initialize screen
@@ -329,12 +370,13 @@ int main() {
     Tetromino *tetrominoes = initializeTetrominoes();
     int random = rand() % 7;
     Tetromino curent = tetrominoes[random];
+    Tetromino ghost;
 
     while (true) {
         int press = wgetch(win);
 
         // Handle user input for movement and rotation
-        bool continueGame = handleUserInput(press, &curent, board, BOARD_HEIGHT, BOARD_WIDTH);
+        bool continueGame = handleUserInput(press, &curent, board, BOARD_HEIGHT, BOARD_WIDTH, &ghost);
         if (!continueGame) {
             break;
         }
@@ -359,7 +401,7 @@ int main() {
         }
 
         // Drawing logic
-        drawGame(win, board, BOARD_HEIGHT, BOARD_WIDTH, score, curent);
+        drawGame(win, board, BOARD_HEIGHT, BOARD_WIDTH, score, curent, &ghost);
     }
     endwin();
 

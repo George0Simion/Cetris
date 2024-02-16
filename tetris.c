@@ -159,6 +159,21 @@ bool isMoveValid(Tetromino tetromino, int** board, int newX, int newY, int BOARD
     return true;
 }
 
+void rotateTetromino(int shape[4][4]) {
+    int newTetromino[4][4];
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            newTetromino[3 - j][i] = shape[i][j];
+        }
+    }
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            shape[i][j] = newTetromino[i][j];
+        }
+    }
+}
+
 bool handleUserInput(int press, Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH) {
     int dirX = 0, dirY = 0;
 
@@ -171,6 +186,16 @@ bool handleUserInput(int press, Tetromino *curent, int **board, int BOARD_HEIGHT
             break;
         case KEY_DOWN:
             dirY = 1;
+            break;
+        case KEY_UP:
+            rotateTetromino(curent->shape); // Rotate
+
+            if (!isMoveValid(*curent, board, curent->x, curent->y, BOARD_HEIGHT, BOARD_WIDTH)) {
+                // If rotation is not valid, rotate back to original position
+                rotateTetromino(curent->shape); // Rotate 3 more times to revert
+                rotateTetromino(curent->shape);
+                rotateTetromino(curent->shape);
+            }
             break;
         default:
             break;
@@ -293,9 +318,11 @@ int main() {
         // Automatic movement down based on timer
         clock_t currentTime = clock();
         double timeSinceLastUpdate = (double)(currentTime - lastUpdateTime) / CLOCKS_PER_SEC;
+
         if (timeSinceLastUpdate >= 1.0) {
             if (isMoveValid(curent, board, curent.x, curent.y + 1, BOARD_HEIGHT, BOARD_WIDTH)) {
                 curent.y += 1; // Tetromino can move down, so move it
+
             } else {
                 lockTetrominoAndUpdateBoard(&curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score);
                 if (!spawnNewTetromino(&curent, tetrominoes, board, BOARD_HEIGHT, BOARD_WIDTH)) {
@@ -317,9 +344,8 @@ int main() {
 
 /*
 
-Maine:
-    1. Rotirea formelor
     2. Debug mai serios sa vad ca merge peste tot 
+        fac debug dupa culori ca e mai usor
     3. Culori
     4. Piesa Next
     5. Aspect mai frumos cu tot cu scor si piesa next 

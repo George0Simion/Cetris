@@ -72,6 +72,8 @@ Tetromino* initializeTetrominoes() {
 }
 
 int score  = 0;
+int curentLevel = 1;
+double dropInterval = 0.5;
 
 int checkCompleteLines(int **board, int BOARD_HEIGHT, int BOARD_WIDTH) {
     int completeLines = 0;
@@ -105,26 +107,33 @@ int checkCompleteLines(int **board, int BOARD_HEIGHT, int BOARD_WIDTH) {
 }
 
 int calculateScore(int linesCleared) {
+    int baseScore;
     switch (linesCleared) {
         case 1:
-            return 100; // Single line
+            baseScore = 40; // Single line
+            break;
         case 2:
-            return 300; // Double line
+            baseScore = 100; // Double line
+            break;
         case 3:
-            return 500; // Triple line
+            baseScore = 300; // Triple line
+            break;
         case 4:
-            return 800; // Tetris
+            baseScore = 1200; // Tetris
+            break;
         default:
             return 0; // No lines cleared, or adjust as needed for your game's logic
     }
+
+    return baseScore * curentLevel;
 }
 
 void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height) {
     erase();
 
     // Top border and score
-    char score_text[30];
-    sprintf(score_text, "  SCORE: %d  ", score);
+    char score_text[60];
+    sprintf(score_text, "  SCORE: %d  LEVEL: %d  ", score, curentLevel);
     int score_pos = (screen_width / 2) - (strlen(score_text) / 2);
     mvaddstr(0, score_pos, score_text);
     for (int x = 0; x < screen_width; x++) {
@@ -188,9 +197,21 @@ void lockTetrominoAndUpdateBoard(Tetromino *curent, int **board, int BOARD_HEIGH
         }
     }
 
-    // Check for complete lines and update the board and score accordingly
+    static int totalLinesCleared = 0;
+
     int linesCleared = checkCompleteLines(board, BOARD_HEIGHT, BOARD_WIDTH);
     *score += calculateScore(linesCleared); // Update score based on the lines cleared
+
+    totalLinesCleared += linesCleared;
+
+    if (totalLinesCleared / 10 > curentLevel - 1) {
+        curentLevel = totalLinesCleared / 10 + 1;
+    }
+
+    dropInterval = 0.5 - (0.15 *(curentLevel - 1));
+    if (dropInterval < 0.1) {
+        dropInterval = 0.1;
+    }
 }
 
 void hardDropTetromino(Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH) {
@@ -233,6 +254,19 @@ void drawGhostPiece(WINDOW *win, Tetromino ghost) {
     wattroff(win, A_DIM); // Turn off the dim attribute
 }
 
+bool spawnNewTetromino(Tetromino *current, Tetromino tetrominoes[], int **board, int BOARD_HEIGHT, int BOARD_WIDTH) {
+    // Generate a random index for the next tetromino
+    int randomIndex = rand() % 7;
+    *current = tetrominoes[randomIndex];
+
+    // Set the starting position of the new tetromino
+    current->x = BOARD_WIDTH / 2 - 2; // Center the tetromino horizontally
+    current->y = 0; // Start at the top of the board
+
+    // Check if the new tetromino can be placed without colliding
+    return isMoveValid(*current, board, current->x, current->y, BOARD_HEIGHT, BOARD_WIDTH);
+}
+
 bool handleUserInput(int press, Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, Tetromino *ghost) {
     int dirX = 0, dirY = 0;
 
@@ -265,7 +299,11 @@ bool handleUserInput(int press, Tetromino *curent, int **board, int BOARD_HEIGHT
 
             lockTetrominoAndUpdateBoard(curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score);
 
-            
+            Tetromino *tetrominoes = initializeTetrominoes();
+            if (!spawnNewTetromino(curent, tetrominoes, board, BOARD_HEIGHT, BOARD_WIDTH)) {
+                // Game Over condition
+                    break;
+            }            
             break;
         default:
             break;
@@ -315,19 +353,6 @@ void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int s
     wrefresh(win);
 }
 
-bool spawnNewTetromino(Tetromino *current, Tetromino tetrominoes[], int **board, int BOARD_HEIGHT, int BOARD_WIDTH) {
-    // Generate a random index for the next tetromino
-    int randomIndex = rand() % 7;
-    *current = tetrominoes[randomIndex];
-
-    // Set the starting position of the new tetromino
-    current->x = BOARD_WIDTH / 2 - 2; // Center the tetromino horizontally
-    current->y = 0; // Start at the top of the board
-
-    // Check if the new tetromino can be placed without colliding
-    return isMoveValid(*current, board, current->x, current->y, BOARD_HEIGHT, BOARD_WIDTH);
-}
-
 
 int main() {
     // Initialize screen
@@ -347,7 +372,6 @@ int main() {
 		exit(1);
 	}
     init_pair(1, COLOR_WHITE, COLOR_BLACK); // Backgroung
-    //wbkgd(win, COLOR_PAIR(1));
 
     // Get terminal dimensions
     int screen_height, screen_width;
@@ -385,7 +409,7 @@ int main() {
         clock_t currentTime = clock();
         double timeSinceLastUpdate = (double)(currentTime - lastUpdateTime) / CLOCKS_PER_SEC;
 
-        if (timeSinceLastUpdate >= 1.0) {
+        if (timeSinceLastUpdate >= dropInterval) {
             if (isMoveValid(curent, board, curent.x, curent.y + 1, BOARD_HEIGHT, BOARD_WIDTH)) {
                 curent.y += 1; // Tetromino can move down, so move it
 
@@ -410,13 +434,10 @@ int main() {
 
 /*
 
-    2. Debug mai serios sa vad ca merge peste tot 
-        fac debug dupa culori ca e mai usor
     3. Culori
     4. Piesa Next
     5. Aspect mai frumos cu tot cu scor si piesa next 
         (BOARD_HEIGHT = screen_height \ 
          BOARD_WIDTH = variabil i guess)
-    7. Cu timpul sa devina mai greu
 
 */

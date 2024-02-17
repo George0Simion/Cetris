@@ -167,8 +167,8 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
     mvwaddch(win, statsStartY + statsHeight - 1, statsStartX + statsWidth - 1, ACS_LRCORNER);
 
     // Print the score and level inside the stats border
-    mvwprintw(win, statsStartY + 1, statsStartX + 2, "Score:         %d", score);
-    mvwprintw(win, statsStartY + 3, statsStartX + 2, "Level:         %d", curentLevel);
+    mvwprintw(win, statsStartY + 1, statsStartX + 2, "Score:        %d", score);
+    mvwprintw(win, statsStartY + 3, statsStartX + 2, "Level:        %d", curentLevel);
 
     int nextWidth = box_width;
     int nextHeight = box_height;

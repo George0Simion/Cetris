@@ -136,20 +136,26 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height) {
     sprintf(score_text, "  SCORE: %d  LEVEL: %d  ", score, curentLevel);
     int score_pos = (screen_width / 2) - (strlen(score_text) / 2);
     mvaddstr(0, score_pos, score_text);
-    for (int x = 0; x < screen_width; x++) {
+    mvaddch(0, 0, ACS_ULCORNER);
+    for (int x = 1; x < screen_width - 1; x++) {
         if (x < score_pos || x >= score_pos + strlen(score_text)) {
-            mvaddch(0, x, '#');
+            mvaddch(0, x, ACS_HLINE);
         }
     }
+    mvaddch(0, screen_width - 1, ACS_URCORNER);
+
     // Side borders
     for (int y = 1; y < screen_height - 1; y++) {
-        mvaddch(y, 0, '#');
-        mvaddch(y, screen_width - 1, '#');
+        mvaddch(y, 0, ACS_VLINE);
+        mvaddch(y, screen_width - 1, ACS_VLINE);
     }
+
     // Bottom border
-    for (int x = 0; x < screen_width; x++) {
-        mvaddch(screen_height - 1, x, '#');
+    mvaddch(screen_height - 1, 0, ACS_LLCORNER);
+    for (int x = 1; x < screen_width - 1; x++) {
+        mvaddch(screen_height - 1, x, ACS_HLINE);
     }
+    mvaddch(screen_height - 1, screen_width - 1, ACS_LRCORNER);
 }
 
 bool isMoveValid(Tetromino tetromino, int** board, int newX, int newY, int BOARD_HEIGHT, int BOARD_WIDTH) {
@@ -242,11 +248,9 @@ void drawGhostPiece(WINDOW *win, Tetromino ghost) {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             if (ghost.shape[i][j] == 1) {
-                // Calculate the screen position based on the ghost's position
                 int y = ghost.y + i + 1;
                 int x = ghost.x + j + 1;
 
-                // Draw the contour of the square (ghost piece part)
                 mvwaddch(win, y, x, ACS_CKBOARD);
             }
         }
@@ -363,15 +367,6 @@ int main() {
     timeout(0);
     box(win, 0, 0);
     wrefresh(win);
-
-    // start color functionality
-	start_color();
-	if (!has_colors()) {
-		endwin();
-		fprintf(stderr, "Error: colors");
-		exit(1);
-	}
-    init_pair(1, COLOR_WHITE, COLOR_BLACK); // Backgroung
 
     // Get terminal dimensions
     int screen_height, screen_width;

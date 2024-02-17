@@ -128,34 +128,69 @@ int calculateScore(int linesCleared) {
     return baseScore * curentLevel;
 }
 
-void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height) {
-    erase();
+void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int leftOffset) {
+    werase(win);
 
-    // Top border and score
-    char score_text[60];
-    sprintf(score_text, "  SCORE: %d  LEVEL: %d  ", score, curentLevel);
+    int statsWidth = 20;
+    int statsHeight = 5;
+    int statsStartX = leftOffset - statsWidth - 3;
+    int statsStartY = (screen_height - statsHeight) / 2;
+
+    // Draw the stats border
+    char stats_text[] = "Stats";
+    int stats_pos = (statsWidth / 2) - (strlen(stats_text) / 2);
+    mvwaddch(win, statsStartY, statsStartX, ACS_ULCORNER);
+
+    for (int x = statsStartX + 1; x < statsStartX + stats_pos; x++) {
+        mvwaddch(win, statsStartY, x, ACS_HLINE);
+    }
+    mvwaddstr(win, statsStartY, statsStartX + stats_pos, stats_text);
+    for (int x = statsStartX + stats_pos + strlen(stats_text); x < statsStartX + statsWidth - 1; x++) {
+        mvwaddch(win, statsStartY, x, ACS_HLINE);
+    }
+    mvwaddch(win, statsStartY, statsStartX + statsWidth - 1, ACS_URCORNER);
+
+    // Draw sides of the stats box
+    for (int y = statsStartY + 1; y < statsStartY + statsHeight - 1; y++) {
+        mvwaddch(win, y, statsStartX, ACS_VLINE);
+        mvwaddch(win, y, statsStartX + statsWidth - 1, ACS_VLINE);
+    }
+
+    // Draw bottom of the stats box
+    mvwaddch(win, statsStartY + statsHeight - 1, statsStartX, ACS_LLCORNER);
+    for (int x = statsStartX + 1; x < statsStartX + statsWidth - 1; x++) {
+        mvwaddch(win, statsStartY + statsHeight - 1, x, ACS_HLINE);
+    }
+    mvwaddch(win, statsStartY + statsHeight - 1, statsStartX + statsWidth - 1, ACS_LRCORNER);
+
+    // Print the score and level inside the stats border
+    mvwprintw(win, statsStartY + 1, statsStartX + 2, "Score:         %d", score);
+    mvwprintw(win, statsStartY + 3, statsStartX + 2, "Level:         %d", curentLevel);
+
+    // Top border
+    char score_text[7] = "Tetris";
     int score_pos = (screen_width / 2) - (strlen(score_text) / 2);
-    mvaddstr(0, score_pos, score_text);
-    mvaddch(0, 0, ACS_ULCORNER);
+    mvaddstr(0, leftOffset + score_pos, score_text);
+    mvaddch(0, leftOffset, ACS_ULCORNER);
     for (int x = 1; x < screen_width - 1; x++) {
         if (x < score_pos || x >= score_pos + strlen(score_text)) {
-            mvaddch(0, x, ACS_HLINE);
+            mvaddch(0, leftOffset + x, ACS_HLINE);
         }
     }
-    mvaddch(0, screen_width - 1, ACS_URCORNER);
+    mvaddch(0, leftOffset + screen_width - 1, ACS_URCORNER);
 
     // Side borders
     for (int y = 1; y < screen_height - 1; y++) {
-        mvaddch(y, 0, ACS_VLINE);
-        mvaddch(y, screen_width - 1, ACS_VLINE);
+        mvaddch(y, leftOffset, ACS_VLINE);
+        mvaddch(y, leftOffset + screen_width - 1, ACS_VLINE);
     }
 
     // Bottom border
-    mvaddch(screen_height - 1, 0, ACS_LLCORNER);
+    mvaddch(screen_height - 1, leftOffset, ACS_LLCORNER);
     for (int x = 1; x < screen_width - 1; x++) {
-        mvaddch(screen_height - 1, x, ACS_HLINE);
+        mvaddch(screen_height - 1, x + leftOffset, ACS_HLINE);
     }
-    mvaddch(screen_height - 1, screen_width - 1, ACS_LRCORNER);
+    mvaddch(screen_height - 1, leftOffset + screen_width - 1, ACS_LRCORNER);
 }
 
 bool isMoveValid(Tetromino tetromino, int** board, int newX, int newY, int BOARD_HEIGHT, int BOARD_WIDTH) {
@@ -242,14 +277,14 @@ void calculateGhostPosition(Tetromino *current, int **board, int BOARD_HEIGHT, i
     ghost->y += dropDistance;
 }
 
-void drawGhostPiece(WINDOW *win, Tetromino ghost) {
+void drawGhostPiece(WINDOW *win, Tetromino ghost, int leftOffset) {
     wattron(win, A_DIM); // Make the ghost less visible
 
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             if (ghost.shape[i][j] == 1) {
                 int y = ghost.y + i + 1;
-                int x = ghost.x + j + 1;
+                int x = ghost.x + j + 1 + leftOffset;
 
                 mvwaddch(win, y, x, ACS_CKBOARD);
             }
@@ -330,14 +365,16 @@ bool handleUserInput(int press, Tetromino *curent, int **board, int BOARD_HEIGHT
 void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int score, Tetromino curent, Tetromino *ghost) {
     // Clear the window for fresh drawing
     werase(win);
-    drawBordersAndScore(win, BOARD_WIDTH + 2, BOARD_HEIGHT + 2);
-    drawGhostPiece(win, *ghost);
+    int leftOffset = (getmaxx(win) - BOARD_WIDTH) / 2;
+
+    drawBordersAndScore(win, BOARD_WIDTH + 2, BOARD_HEIGHT + 2, leftOffset);
+    drawGhostPiece(win, *ghost, leftOffset);
 
     // Draw the board with locked tetrominoes
     for (int y = 0; y < BOARD_HEIGHT; y++) {
         for (int x = 0; x < BOARD_WIDTH; x++) {
             if (board[y][x] == 1) {
-                mvwaddch(win, y+1, x+1, ACS_CKBOARD);
+                mvwaddch(win, y+1, x+1+leftOffset, ACS_CKBOARD);
             }
         }
     }
@@ -347,7 +384,7 @@ void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int s
         for (int j = 0; j < 4; j++) {
             if (curent.shape[i][j] == 1) {
                 int posY = curent.y + i + 1;
-                int posX = curent.x + j + 1;
+                int posX = curent.x + j + 1 + leftOffset;
                 mvwaddch(win, posY, posX, ACS_CKBOARD);
             }
         }
@@ -373,7 +410,7 @@ int main() {
     getmaxyx(win, screen_height, screen_width);
     
     int BOARD_HEIGHT = screen_height - 2;
-    int BOARD_WIDTH = screen_width - 2;
+    int BOARD_WIDTH = screen_width - 56;
 
     int** board = malloc(BOARD_HEIGHT * sizeof(int*));
     for (int i = 0; i < BOARD_HEIGHT; i++) {

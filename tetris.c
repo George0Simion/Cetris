@@ -188,17 +188,30 @@ int main() {
 
     Tetromino next = tetrominoes[random];
     next.x = screen_width - box_width + 5;
-    next.y = BOARD_HEIGHT / 2;
+    next.y = BOARD_HEIGHT / 2 - 1;
+    bool isPaused = false;
 
     while (true) {
         int press = wgetch(win);
 
-        // Handle user input for movement and rotation
-        bool continueGame = handleUserInput(press, &curent, board, BOARD_HEIGHT, BOARD_WIDTH, &ghost, &next, cellValue);
-        if (!continueGame) {
-            break;
+        if (press == 'p') {
+            isPaused = !isPaused;
+            if (isPaused) {
+                // Show pause message only once when pausing
+                clear();
+                mvprintw(LINES / 2, (COLS - strlen("Game Paused. Press 'p' to resume...")) / 2, "Game Paused. Press 'p' to resume...");
+                refresh();
+            }
+            continue; // Skip the rest of this iteration to avoid flickering
         }
 
+        if (!isPaused) {
+            // Handle user input for movement and rotation
+            bool continueGame = handleUserInput(press, &curent, board, BOARD_HEIGHT, BOARD_WIDTH, &ghost, &next, cellValue);
+            if (!continueGame) {
+                break;
+            }
+        } 
         // Automatic movement down based on timer
         clock_t currentTime = clock();
         double timeSinceLastUpdate = (double)(currentTime - lastUpdateTime) / CLOCKS_PER_SEC;
@@ -218,7 +231,9 @@ int main() {
         }
 
         // Drawing logic
-        drawGame(win, board, BOARD_HEIGHT, BOARD_WIDTH, score, curent, &ghost, next, cellValue);
+        if (!isPaused) {
+            drawGame(win, board, BOARD_HEIGHT, BOARD_WIDTH, score, curent, &ghost, next, cellValue);
+        }
     }
     endwin();
 

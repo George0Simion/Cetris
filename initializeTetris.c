@@ -83,6 +83,7 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
     int statsStartY = (screen_height - statsHeight) / 2;
 
     // Draw the stats border
+    attron(COLOR_PAIR(1));
     char stats_text[] = "Stats";
     int stats_pos = (statsWidth / 2) - (strlen(stats_text) / 2);
 
@@ -168,6 +169,7 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
         mvaddch(screen_height - 1, x + leftOffset, ACS_HLINE);
     }
     mvaddch(screen_height - 1, leftOffset + screen_width - 1, ACS_LRCORNER);
+    attroff(COLOR_PAIR(1));
 }
 
 void drawGhostPiece(WINDOW *win, Tetromino ghost, int leftOffset) {
@@ -186,7 +188,7 @@ void drawGhostPiece(WINDOW *win, Tetromino ghost, int leftOffset) {
     wattroff(win, COLOR_PAIR(ghost.type) | A_DIM); // Turn off the dim attribute
 }
 
-void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int score, Tetromino curent, Tetromino *ghost, Tetromino next) {
+void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int score, Tetromino curent, Tetromino *ghost, Tetromino next, int **cellValue) {
     // Clear the window for fresh drawing
     werase(win);
     int leftOffset = (getmaxx(win) - BOARD_WIDTH) / 2;
@@ -198,7 +200,9 @@ void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int s
     for (int y = 0; y < BOARD_HEIGHT; y++) {
         for (int x = 0; x < BOARD_WIDTH; x++) {
             if (board[y][x] == 1) {
+                wattron(win, COLOR_PAIR(cellValue[y][x]));
                 mvwaddch(win, y+1, x+1+leftOffset, ACS_CKBOARD);
+                wattroff(win, COLOR_PAIR(cellValue[y][x]));
             }
         }
     }

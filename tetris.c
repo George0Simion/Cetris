@@ -69,7 +69,7 @@ bool isMoveValid(Tetromino tetromino, int** board, int newX, int newY, int BOARD
     return true;
 }
 
-bool handleUserInput(int press, Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, Tetromino *ghost, Tetromino *next) {
+bool handleUserInput(int press, Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, Tetromino *ghost, Tetromino *next, int **cellValue) {
     int dirX = 0, dirY = 0;
 
     switch (press) {
@@ -99,7 +99,7 @@ bool handleUserInput(int press, Tetromino *curent, int **board, int BOARD_HEIGHT
         case ' ':
             hardDropTetromino(curent, board, BOARD_HEIGHT, BOARD_WIDTH);
 
-            lockTetrominoAndUpdateBoard(curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score);
+            lockTetrominoAndUpdateBoard(curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score, cellValue);
 
             Tetromino *tetrominoes = initializeTetrominoes();
             if (!spawnNewTetromino(curent, tetrominoes, board, BOARD_HEIGHT, BOARD_WIDTH, next)) {
@@ -142,6 +142,7 @@ int main() {
 		fprintf(stderr, "Error: colors");
 		exit(1);
 	}
+    use_default_colors();
 	init_pair(1, COLOR_CYAN, COLOR_BLACK); // I
     init_pair(2, COLOR_YELLOW, COLOR_BLACK); // O
     init_pair(3, COLOR_MAGENTA, COLOR_BLACK); // T
@@ -149,6 +150,8 @@ int main() {
     init_pair(5, COLOR_RED, COLOR_BLACK); // Z
 	init_pair(6, COLOR_BLUE, COLOR_BLACK); // L
 	init_pair(7, COLOR_WHITE, COLOR_BLACK); // L rev
+    init_pair(8, COLOR_BLACK, COLOR_BLACK);
+    // bkgd(COLOR_PAIR(8));
 
     // Get terminal dimensions
     int screen_height, screen_width;
@@ -165,6 +168,14 @@ int main() {
         }
     }
 
+    int **cellValue = malloc(BOARD_HEIGHT * sizeof(int*));
+    for (int i = 0; i < BOARD_HEIGHT; i++) {
+        cellValue[i] = malloc(BOARD_WIDTH * sizeof(int));
+        for (int j = 0; j < BOARD_WIDTH; j++) {
+            cellValue[i][j] = 0; // Initialize the cellValues with 0
+        }
+    }
+
     srand(time(NULL));
     clock_t lastUpdateTime = clock();
 
@@ -177,13 +188,13 @@ int main() {
 
     Tetromino next = tetrominoes[random];
     next.x = screen_width - box_width + 5;
-    next.y = BOARD_HEIGHT / 2 - 1;
+    next.y = BOARD_HEIGHT / 2;
 
     while (true) {
         int press = wgetch(win);
 
         // Handle user input for movement and rotation
-        bool continueGame = handleUserInput(press, &curent, board, BOARD_HEIGHT, BOARD_WIDTH, &ghost, &next);
+        bool continueGame = handleUserInput(press, &curent, board, BOARD_HEIGHT, BOARD_WIDTH, &ghost, &next, cellValue);
         if (!continueGame) {
             break;
         }
@@ -197,7 +208,7 @@ int main() {
                 curent.y += 1; // Tetromino can move down, so move it
 
             } else {
-                lockTetrominoAndUpdateBoard(&curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score);
+                lockTetrominoAndUpdateBoard(&curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score, cellValue);
                 if (!spawnNewTetromino(&curent, tetrominoes, board, BOARD_HEIGHT, BOARD_WIDTH, &next)) {
                     printf("Game over! Your Score: %d\n", score);
                     break;
@@ -207,7 +218,7 @@ int main() {
         }
 
         // Drawing logic
-        drawGame(win, board, BOARD_HEIGHT, BOARD_WIDTH, score, curent, &ghost, next);
+        drawGame(win, board, BOARD_HEIGHT, BOARD_WIDTH, score, curent, &ghost, next, cellValue);
     }
     endwin();
 

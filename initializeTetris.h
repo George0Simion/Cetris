@@ -24,7 +24,7 @@ typedef struct {
 Tetromino* initializeTetrominoes();
 void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int leftOffset);
 void drawGhostPiece(WINDOW *win, Tetromino ghost, int leftOffset);
-void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int score, Tetromino curent, Tetromino *ghost, Tetromino next);
+void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int score, Tetromino curent, Tetromino *ghost, Tetromino next, int **cellValue);
 int checkCompleteLines(int **board, int BOARD_HEIGHT, int BOARD_WIDTH);
 int calculateScore(int linesCleared);
 bool isMoveValid(Tetromino tetromino, int** board, int newX, int newY, int BOARD_HEIGHT, int BOARD_WIDTH);

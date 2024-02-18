@@ -15,7 +15,7 @@ void rotateTetromino(int shape[4][4]) {
     }
 }
 
-void lockTetrominoAndUpdateBoard(Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int *score) {
+void lockTetrominoAndUpdateBoard(Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int *score, int **cellValue) {
     // Lock the current tetromino on the board
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
@@ -24,6 +24,7 @@ void lockTetrominoAndUpdateBoard(Tetromino *curent, int **board, int BOARD_HEIGH
                 int x = curent->x + j;
                 if (y >= 0 && y < BOARD_HEIGHT && x >= 0 && x < BOARD_WIDTH) {
                     board[y][x] = 1; // Mark the cell as filled
+                    cellValue[y][x] = curent->type;
                 }
             }
         }

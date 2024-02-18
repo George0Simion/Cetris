@@ -194,7 +194,6 @@ int main() {
     bool isPaused = false;
     bool restartGame = true;
     bool gameRunning = true;
-    bool finish = false;
 
     while (gameRunning) {
         int press = wgetch(win);
@@ -204,7 +203,6 @@ int main() {
             nodelay(win, !isPaused);
 
             if (isPaused) {
-                // Show pause message only once when pausing
                 clear();
                 mvprintw(LINES / 2 - 1, (COLS - strlen("Game Paused.")) / 2, "Game Paused.");
                 mvprintw(LINES / 2, (COLS - strlen("Press 'p' to resume")) / 2, "Press 'p' to resume");
@@ -272,7 +270,6 @@ int main() {
             } else {
                 lockTetrominoAndUpdateBoard(&curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score, cellValue);
                 if (!spawnNewTetromino(&curent, tetrominoes, board, BOARD_HEIGHT, BOARD_WIDTH, &next)) {
-                    finish = true;
                     break;
                 }
             }
@@ -285,18 +282,13 @@ int main() {
         }
     }
     endwin();
-    if (finish == true) {
-        printf("Congrats, you won! Your score: %d\n", score);
-    } else if (finish = false) {
-        printf("Game over! Your score: %d\n", score);
-    }
+
+    printf("Game over! Your score: %d\n", score);
 
     return 0;
 }
 
 /*
     tetromino mai mare
-    help box
-    new game
     
 */

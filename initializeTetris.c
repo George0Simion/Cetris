@@ -27,15 +27,15 @@ int shapes[7][4][4] = {
             {0, 0, 0, 0}
         },
         { // S shape
+            {0, 0, 0, 0},
             {0, 1, 1, 0},
             {1, 1, 0, 0},
-            {0, 0, 0, 0},
             {0, 0, 0, 0}
         },
         { // Z shape
+            {0, 0, 0, 0},
             {1, 1, 0, 0},
             {0, 1, 1, 0},
-            {0, 0, 0, 0},
             {0, 0, 0, 0}
         },
         { // L shape
@@ -45,10 +45,10 @@ int shapes[7][4][4] = {
             {0, 1, 1, 0}
         },
         { // L reversed shape
-            {0, 1, 0, 0},
-            {0, 1, 0, 0},
-            {0, 1, 0, 0},
-            {1, 1, 0, 0}
+            {0, 0, 1, 0},
+            {0, 0, 1, 0},
+            {0, 0, 1, 0},
+            {0, 1, 1, 0}
         }
     };
 
@@ -83,7 +83,7 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
     int statsStartX = leftOffset - statsWidth - 3;
     int statsStartY = (screen_height - statsHeight) / 2 - 8;
 
-    // Draw the stats border
+        // Draw the stats border
     //attron(COLOR_PAIR(1));
     char stats_text[] = "Stats";
     int stats_pos = (statsWidth / 2) - (strlen(stats_text) / 2);
@@ -116,6 +116,7 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
     mvwprintw(win, statsStartY + 2, statsStartX + 2, "Level:        %d", curentLevel);
     mvwprintw(win, statsStartY + 3, statsStartX + 2, "Lines:        %d", totalLinesCleared);
 
+        // Draw the next border
     int nextWidth = box_width;
     int nextHeight = box_height;
     nextStartX = leftOffset + screen_width + 3;
@@ -147,6 +148,7 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
     }
     mvwaddch(win, nextStartY + nextHeight - 1, nextStartX + nextWidth - 1, ACS_LRCORNER);
 
+        // Draw the game border
     // Top border
     char score_text[7] = "Cetris";
     int score_pos = (screen_width / 2) - (strlen(score_text) / 2);
@@ -172,6 +174,45 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
     }
     mvaddch(screen_height - 1, leftOffset + screen_width - 1, ACS_LRCORNER);
     //attroff(COLOR_PAIR(1));
+
+        // Draw the help border
+    int helpStartY = nextStartY + nextHeight + 2;
+    int helpWidth = nextWidth;
+    int helpHeight = 10;
+
+    char help_text[] = "Help";
+    int help_pos = (helpWidth / 2) - (strlen(help_text) / 2);
+
+    // Draw the help border similar to how you drew the "Stats" and "Next" sections
+    mvwaddch(win, helpStartY, nextStartX, ACS_ULCORNER);
+    for (int x = nextStartX + 1; x < nextStartX + help_pos; x++) {
+        mvwaddch(win, helpStartY, x, ACS_HLINE);
+    }
+    mvwaddstr(win, helpStartY, nextStartX + help_pos, help_text);
+    for (int x = nextStartX + help_pos + strlen(help_text); x < nextStartX + helpWidth - 1; x++) {
+        mvwaddch(win, helpStartY, x, ACS_HLINE);
+    }
+    mvwaddch(win, helpStartY, nextStartX + helpWidth - 1, ACS_URCORNER);
+
+    // Draw sides of the help box
+    for (int y = helpStartY + 1; y < helpStartY + helpHeight - 1; y++) {
+        mvwaddch(win, y, nextStartX, ACS_VLINE);
+        mvwaddch(win, y, nextStartX + helpWidth - 1, ACS_VLINE);
+    }
+
+    // Draw bottom of the help box
+    mvwaddch(win, helpStartY + helpHeight - 1, nextStartX, ACS_LLCORNER);
+    for (int x = nextStartX + 1; x < nextStartX + helpWidth - 1; x++) {
+        mvwaddch(win, helpStartY + helpHeight - 1, x, ACS_HLINE);
+    }
+    mvwaddch(win, helpStartY + helpHeight - 1, nextStartX + helpWidth - 1, ACS_LRCORNER);
+
+    // Print the controls inside the help border
+    char* controls[] = {"Left: <", "Right: >", "Down: v", "Rotate: ^", "Drop: space", "Pause: p", "Restart: p+r", "Quit: esc"};
+    int controlStartY = helpStartY + 1;
+    for (int i = 0; i < sizeof(controls) / sizeof(controls[0]); i++) {
+        mvwprintw(win, controlStartY + i, nextStartX + 2, "%s", controls[i]);
+    }
 }
 
 void drawGhostPiece(WINDOW *win, Tetromino ghost, int leftOffset) {
@@ -216,7 +257,6 @@ void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int s
             if (curent.shape[i][j] == 1) {
                 int posY = curent.y + i + 1;
                 int posX = curent.x + j + 1 + leftOffset;
-                mvwaddch(win, posY, posX, ACS_CKBOARD);
             }
         }
     }

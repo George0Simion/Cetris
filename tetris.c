@@ -235,7 +235,7 @@ int main() {
 
                         next = tetrominoes[rand() % 7]; // Re-selct the next tetromino
                         next.x = screen_width - box_width + 5;
-                        next.y = BOARD_HEIGHT / 2 - 8;
+                        next.y = BOARD_HEIGHT / 2 - 4;
 
                         lastUpdateTime = clock(); // Reset the timer
                         restartGame = false; // Reset the restart flag

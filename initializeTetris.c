@@ -257,6 +257,7 @@ void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int s
             if (curent.shape[i][j] == 1) {
                 int posY = curent.y + i + 1;
                 int posX = curent.x + j + 1 + leftOffset;
+                mvwaddch(win, posY, posX, ACS_CKBOARD);
             }
         }
     }

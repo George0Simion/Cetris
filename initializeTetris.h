@@ -14,6 +14,7 @@ extern double dropInterval;
 extern int nextStartX;
 extern int nextStartY;
 extern int shapes[7][4][4];
+extern int totalLinesCleared;
 
 typedef struct {
     int shape[4][4];

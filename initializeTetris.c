@@ -5,6 +5,7 @@ int curentLevel = 1;
 double dropInterval = 0.5;
 int nextStartX;
 int nextStartY;
+int totalLinesCleared = 0;
 
 int shapes[7][4][4] = {
         { // I shape
@@ -80,10 +81,10 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
     int statsWidth = box_width;
     int statsHeight = box_height - 2;
     int statsStartX = leftOffset - statsWidth - 3;
-    int statsStartY = (screen_height - statsHeight) / 2;
+    int statsStartY = (screen_height - statsHeight) / 2 - 8;
 
     // Draw the stats border
-    attron(COLOR_PAIR(1));
+    //attron(COLOR_PAIR(1));
     char stats_text[] = "Stats";
     int stats_pos = (statsWidth / 2) - (strlen(stats_text) / 2);
 
@@ -112,12 +113,13 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
 
     // Print the score and level inside the stats border
     mvwprintw(win, statsStartY + 1, statsStartX + 2, "Score:        %d", score);
-    mvwprintw(win, statsStartY + 3, statsStartX + 2, "Level:        %d", curentLevel);
+    mvwprintw(win, statsStartY + 2, statsStartX + 2, "Level:        %d", curentLevel);
+    mvwprintw(win, statsStartY + 3, statsStartX + 2, "Lines:        %d", totalLinesCleared);
 
     int nextWidth = box_width;
     int nextHeight = box_height;
     nextStartX = leftOffset + screen_width + 3;
-    nextStartY = (screen_height - nextHeight) / 2;
+    nextStartY = (screen_height - nextHeight) / 2 - 7;
 
     char next_text[] = "Next";
     int next_pos = (nextWidth / 2) - (strlen(next_text) / 2);
@@ -146,7 +148,7 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
     mvwaddch(win, nextStartY + nextHeight - 1, nextStartX + nextWidth - 1, ACS_LRCORNER);
 
     // Top border
-    char score_text[7] = "Tetris";
+    char score_text[7] = "Cetris";
     int score_pos = (screen_width / 2) - (strlen(score_text) / 2);
     mvaddstr(0, leftOffset + score_pos, score_text);
     mvaddch(0, leftOffset, ACS_ULCORNER);
@@ -169,7 +171,7 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
         mvaddch(screen_height - 1, x + leftOffset, ACS_HLINE);
     }
     mvaddch(screen_height - 1, leftOffset + screen_width - 1, ACS_LRCORNER);
-    attroff(COLOR_PAIR(1));
+    //attroff(COLOR_PAIR(1));
 }
 
 void drawGhostPiece(WINDOW *win, Tetromino ghost, int leftOffset) {

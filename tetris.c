@@ -104,13 +104,14 @@ bool handleUserInput(int press, Tetromino *curent, int **board, int BOARD_HEIGHT
             Tetromino *tetrominoes = initializeTetrominoes();
             if (!spawnNewTetromino(curent, tetrominoes, board, BOARD_HEIGHT, BOARD_WIDTH, next)) {
                 // Game Over condition
-                    break;
+                break;
             }            
             break;
         default:
             break;
     }
     if (press == '\e') {
+        endwin();
         return false;
     }
 
@@ -131,6 +132,7 @@ int main() {
 	keypad(win, true);
 	nodelay(win, true);
 	curs_set(0);
+    noecho();
     timeout(0);
     box(win, 0, 0);
     wrefresh(win);
@@ -150,8 +152,8 @@ int main() {
     init_pair(5, COLOR_RED, COLOR_BLACK); // Z
 	init_pair(6, COLOR_BLUE, COLOR_BLACK); // L
 	init_pair(7, COLOR_WHITE, COLOR_BLACK); // L rev
-    init_pair(8, COLOR_BLACK, COLOR_BLACK);
-    // bkgd(COLOR_PAIR(8));
+    init_pair(8, COLOR_CYAN, COLOR_BLACK);
+    bkgd(COLOR_PAIR(8));
 
     // Get terminal dimensions
     int screen_height, screen_width;
@@ -188,21 +190,68 @@ int main() {
 
     Tetromino next = tetrominoes[random];
     next.x = screen_width - box_width + 5;
-    next.y = BOARD_HEIGHT / 2 - 1;
+    next.y = BOARD_HEIGHT / 2 - 8;
     bool isPaused = false;
+    bool restartGame = true;
+    bool gameRunning = true;
+    bool finish = false;
 
-    while (true) {
+    while (gameRunning) {
         int press = wgetch(win);
 
         if (press == 'p') {
             isPaused = !isPaused;
+            nodelay(win, !isPaused);
+
             if (isPaused) {
                 // Show pause message only once when pausing
                 clear();
-                mvprintw(LINES / 2, (COLS - strlen("Game Paused. Press 'p' to resume...")) / 2, "Game Paused. Press 'p' to resume...");
+                mvprintw(LINES / 2 - 1, (COLS - strlen("Game Paused.")) / 2, "Game Paused.");
+                mvprintw(LINES / 2, (COLS - strlen("Press 'p' to resume")) / 2, "Press 'p' to resume");
+                mvprintw(LINES / 2 + 1, (COLS - strlen("Press 'r' to restart")) / 2, "Press 'r' to restart");
+                mvprintw(LINES / 2 + 2, (COLS - strlen("Press 'esc' to exit")) / 2, "Press 'esc' to exit");
                 refresh();
+
+                while (true) {
+                    int key = wgetch(win);
+
+                    if (key == 'p') {
+                        clear();
+                        break;
+
+                    } else if (key == 'r') {
+                        score = 0;
+                        for (int i = 0; i < BOARD_HEIGHT; i++) {
+                            for (int j = 0; j < BOARD_WIDTH; j++) {
+                                board[i][j] = 0;
+                            }
+                        }
+                        for (int i = 0; i < BOARD_HEIGHT; i++) {
+                            for (int j = 0; j < BOARD_WIDTH; j++) {
+                                cellValue[i][j] = 0;
+                            }
+                        }
+                        curent = tetrominoes[rand() % 7]; // Re-select initial tetromino
+                        curent.x = BOARD_WIDTH / 2 - 2;
+                        curent.y = 0;
+
+                        next = tetrominoes[rand() % 7]; // Re-selct the next tetromino
+                        next.x = screen_width - box_width + 5;
+                        next.y = BOARD_HEIGHT / 2 - 8;
+
+                        lastUpdateTime = clock(); // Reset the timer
+                        restartGame = false; // Reset the restart flag
+                        clear();
+                        break;
+
+                    } else if (key == 27) {
+                        gameRunning = false; // Exit game loop
+                        break;
+                    }
+                }
+                isPaused = false; // Ensure game is unpaused if exiting pause menu
+                nodelay(win, TRUE);
             }
-            continue; // Skip the rest of this iteration to avoid flickering
         }
 
         if (!isPaused) {
@@ -223,7 +272,7 @@ int main() {
             } else {
                 lockTetrominoAndUpdateBoard(&curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score, cellValue);
                 if (!spawnNewTetromino(&curent, tetrominoes, board, BOARD_HEIGHT, BOARD_WIDTH, &next)) {
-                    printf("Game over! Your Score: %d\n", score);
+                    finish = true;
                     break;
                 }
             }
@@ -236,6 +285,18 @@ int main() {
         }
     }
     endwin();
+    if (finish == true) {
+        printf("Congrats, you won! Your score: %d\n", score);
+    } else if (finish = false) {
+        printf("Game over! Your score: %d\n", score);
+    }
 
     return 0;
 }
+
+/*
+    tetromino mai mare
+    help box
+    new game
+    
+*/

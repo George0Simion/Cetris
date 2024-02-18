@@ -30,8 +30,6 @@ void lockTetrominoAndUpdateBoard(Tetromino *curent, int **board, int BOARD_HEIGH
         }
     }
 
-    static int totalLinesCleared = 0;
-
     int linesCleared = checkCompleteLines(board, BOARD_HEIGHT, BOARD_WIDTH);
     *score += calculateScore(linesCleared); // Update score based on the lines cleared
 

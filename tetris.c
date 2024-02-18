@@ -135,6 +135,21 @@ int main() {
     box(win, 0, 0);
     wrefresh(win);
 
+    // start color functionality
+	start_color();
+	if (!has_colors()) {
+		endwin();
+		fprintf(stderr, "Error: colors");
+		exit(1);
+	}
+	init_pair(1, COLOR_CYAN, COLOR_BLACK); // I
+    init_pair(2, COLOR_YELLOW, COLOR_BLACK); // O
+    init_pair(3, COLOR_MAGENTA, COLOR_BLACK); // T
+    init_pair(4, COLOR_GREEN, COLOR_BLACK); // S
+    init_pair(5, COLOR_RED, COLOR_BLACK); // Z
+	init_pair(6, COLOR_BLUE, COLOR_BLACK); // L
+	init_pair(7, COLOR_WHITE, COLOR_BLACK); // L rev
+
     // Get terminal dimensions
     int screen_height, screen_width;
     getmaxyx(win, screen_height, screen_width);

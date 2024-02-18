@@ -6,13 +6,7 @@ double dropInterval = 0.5;
 int nextStartX;
 int nextStartY;
 
-Tetromino* initializeTetrominoes() {
-    Tetromino *tetrominoes = malloc(7 * sizeof(Tetromino));
-    if (tetrominoes == NULL) {
-        return NULL;
-    }
-
-    int shapes[7][4][4] = {
+int shapes[7][4][4] = {
         { // I shape
             {0, 1, 0, 0},
             {0, 1, 0, 0},
@@ -20,9 +14,9 @@ Tetromino* initializeTetrominoes() {
             {0, 1, 0, 0}
         },
         { // O shape
-            {1, 1, 0, 0},
-            {1, 1, 0, 0},
             {0, 0, 0, 0},
+            {0, 1, 1, 0},
+            {0, 1, 1, 0},
             {0, 0, 0, 0}
         },
         { // T shape
@@ -57,11 +51,25 @@ Tetromino* initializeTetrominoes() {
         }
     };
 
+Tetromino* initializeTetrominoes() {
+    Tetromino *tetrominoes = malloc(7 * sizeof(Tetromino));
+    if (tetrominoes == NULL) {
+        return NULL;
+    }
+
     for (int i = 0; i < 7; i++) {
         memcpy(tetrominoes[i].shape, shapes[i], sizeof(shapes[i]));
         tetrominoes[i].x = 0; // Set initial x position
         tetrominoes[i].y = 0; // Set initial y position
     }
+
+    tetrominoes[0].type = 1;
+    tetrominoes[1].type = 2;
+    tetrominoes[2].type = 3;
+    tetrominoes[3].type = 4;
+    tetrominoes[4].type = 5;
+    tetrominoes[5].type = 6;
+    tetrominoes[6].type = 7;
 
     return tetrominoes;
 }
@@ -163,7 +171,7 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
 }
 
 void drawGhostPiece(WINDOW *win, Tetromino ghost, int leftOffset) {
-    wattron(win, A_DIM); // Make the ghost less visible
+    wattron(win, COLOR_PAIR(ghost.type) | A_DIM); // Make the ghost less visible
 
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
@@ -175,7 +183,7 @@ void drawGhostPiece(WINDOW *win, Tetromino ghost, int leftOffset) {
             }
         }
     }
-    wattroff(win, A_DIM); // Turn off the dim attribute
+    wattroff(win, COLOR_PAIR(ghost.type) | A_DIM); // Turn off the dim attribute
 }
 
 void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int score, Tetromino curent, Tetromino *ghost, Tetromino next) {
@@ -194,8 +202,9 @@ void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int s
             }
         }
     }
-
+    
     // Draw the current tetromino
+    wattron(win, COLOR_PAIR(curent.type));
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             if (curent.shape[i][j] == 1) {
@@ -205,8 +214,10 @@ void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int s
             }
         }
     }
+    wattroff(win, COLOR_PAIR(curent.type));
 
     // Draw the next tetromino
+    wattron(win, COLOR_PAIR(next.type));
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             if (next.shape[i][j] == 1) {
@@ -216,6 +227,7 @@ void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int s
             }
         }
     }
+    wattroff(win, COLOR_PAIR(next.type));
 
     // Refresh the window to update the screen
     wrefresh(win);

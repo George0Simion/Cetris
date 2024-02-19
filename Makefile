@@ -1,7 +1,7 @@
 .PHONY: clean run-tetris
 
 tetris: tetris.c initializeTetris.c tetrisGameplay.c
-	cc tetris.c initializeTetris.c tetrisGameplay.c -o tetris -lncurses
+	cc -ggdb tetris.c initializeTetris.c tetrisGameplay.c -o tetris -lncurses
 
 run-tetris: tetris
 	./tetris

@@ -1,5 +1,16 @@
 #include "tetrisGameplay.h"
 
+void freeTetromino(int **board, int **cellValue, int BOARD_HEIGHT, Tetromino *tetrominoes) {
+    for (int i = 0; i < BOARD_HEIGHT; i++) {
+        free(board[i]);
+        free(cellValue[i]);
+    }
+    free(board);
+    free(cellValue);
+
+    free(tetrominoes);
+}
+
 void countdown(WINDOW *win, int screen_height, int screen_width) {
     init_pair(9, COLOR_CYAN, -1);
 
@@ -88,7 +99,7 @@ bool isMoveValid(Tetromino tetromino, int** board, int newX, int newY, int BOARD
     return true;
 }
 
-bool handleUserInput(WINDOW *win, int press, Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, Tetromino *ghost, Tetromino *next, int **cellValue, Tetromino *hold, bool *canHold) {
+bool handleUserInput(WINDOW *win, int press, Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, Tetromino *ghost, Tetromino *next, int **cellValue, Tetromino *hold, bool *canHold, Tetromino *tetrominoes) {
     int dirX = 0, dirY = 0;
 
     switch (press) {
@@ -127,11 +138,10 @@ bool handleUserInput(WINDOW *win, int press, Tetromino *curent, int **board, int
             hardDropTetromino(curent, board, BOARD_HEIGHT, BOARD_WIDTH);
             lockTetrominoAndUpdateBoard(win, curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score, cellValue, canHold);
 
-            Tetromino *tetrominoes = initializeTetrominoes();
             if (!spawnNewTetromino(curent, tetrominoes, board, BOARD_HEIGHT, BOARD_WIDTH, next)) {
                 // Game Over condition
                 break;
-            }            
+            }
             break;
 
         case 'c':
@@ -140,8 +150,10 @@ bool handleUserInput(WINDOW *win, int press, Tetromino *curent, int **board, int
                     memcpy(hold, curent, sizeof(Tetromino));
                     hold->isActive = true;
                     *curent = *next;
-                    Tetromino *tetrominoes = initializeTetrominoes();
-                    spawnNewTetromino(curent, tetrominoes, board, BOARD_HEIGHT, BOARD_WIDTH, next);
+                    if (!spawnNewTetromino(curent, tetrominoes, board, BOARD_HEIGHT, BOARD_WIDTH, next)) {
+                        // Game Over condition
+                        break;
+                    }
 
                 } else {
                     Tetromino temp = *hold;
@@ -156,7 +168,6 @@ bool handleUserInput(WINDOW *win, int press, Tetromino *curent, int **board, int
                 hold->x = box_width - box_width / 2 + 3;
                 hold->y = BOARD_HEIGHT / 2 - 8;
 
-                //drawGame(win, board, BOARD_HEIGHT, BOARD_WIDTH, score, *curent, ghost, *next, cellValue, *hold);
                 *canHold = false;                    
             }
             break;
@@ -206,6 +217,7 @@ int main() {
     init_pair(5, COLOR_RED, COLOR_BLACK); // Z
 	init_pair(6, COLOR_BLUE, COLOR_BLACK); // L
 	init_pair(7, COLOR_WHITE, COLOR_BLACK); // L rev
+    init_pair(9, COLOR_CYAN, -1);
 
     // Get terminal dimensions
     int screen_height, screen_width;
@@ -261,12 +273,12 @@ int main() {
 
             if (isPaused) {
                 clear();
-                attron(COLOR_PAIR(1));
+                attron(COLOR_PAIR(9));
                 mvprintw(LINES / 2 - 1, (COLS - strlen("Game Paused.")) / 2, "Game Paused.");
                 mvprintw(LINES / 2, (COLS - strlen("Press 'p' to resume")) / 2, "Press 'p' to resume");
                 mvprintw(LINES / 2 + 1, (COLS - strlen("Press 'r' to restart")) / 2, "Press 'r' to restart");
                 mvprintw(LINES / 2 + 2, (COLS - strlen("Press 'esc' to exit")) / 2, "Press 'esc' to exit");
-                attroff(COLOR_PAIR(1));
+                attroff(COLOR_PAIR(9));
                 refresh();
 
                 while (true) {
@@ -315,7 +327,7 @@ int main() {
 
         if (!isPaused) {
             // Handle user input for movement and rotation
-            bool continueGame = handleUserInput(win, press, &curent, board, BOARD_HEIGHT, BOARD_WIDTH, &ghost, &next, cellValue, &hold, &canHold);
+            bool continueGame = handleUserInput(win, press, &curent, board, BOARD_HEIGHT, BOARD_WIDTH, &ghost, &next, cellValue, &hold, &canHold, tetrominoes);
             if (!continueGame) {
                 break;
             }
@@ -344,8 +356,8 @@ int main() {
         }
     }
     endwin();
-
+    freeTetromino(board, cellValue, BOARD_HEIGHT, tetrominoes);
     printf("Game over! Your score: %d\n", score);
-
+    
     return 0;
 }

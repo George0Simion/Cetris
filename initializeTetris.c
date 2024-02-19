@@ -252,7 +252,7 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
         // Draw the help border
     int helpStartY = nextStartY + nextHeight + 2;
     int helpWidth = nextWidth;
-    int helpHeight = 10;
+    int helpHeight = 11;
 
     char help_text[] = "Help";
     int help_pos = (helpWidth / 2) - (strlen(help_text) / 2);
@@ -289,6 +289,7 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
         "Down:       s, v",
         "Rotate:     w, ^",
         "Drop:      space",
+        "Hold:          c",
         "Pause:         p",
         "Restart:     p+r",
         "Quit:        esc"

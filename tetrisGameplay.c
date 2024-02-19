@@ -15,7 +15,7 @@ void rotateTetromino(int shape[4][4]) {
     }
 }
 
-void lockTetrominoAndUpdateBoard(WINDOW *win ,Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int *score, int **cellValue) {
+void lockTetrominoAndUpdateBoard(WINDOW *win ,Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int *score, int **cellValue, bool *canHold) {
     // Lock the current tetromino on the board
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
@@ -77,6 +77,8 @@ void lockTetrominoAndUpdateBoard(WINDOW *win ,Tetromino *curent, int **board, in
     if (dropInterval < 0.1) {
         dropInterval = 0.1;
     }
+
+    *canHold = true;
 }
 
 void hardDropTetromino(Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH) {
@@ -112,7 +114,7 @@ bool spawnNewTetromino(Tetromino *current, Tetromino tetrominoes[], int **board,
     int randomIndex = rand() % 7;
     *next = tetrominoes[randomIndex];
     next->x = (box_width - 4) / 2;
-    next->y = (box_height - 2) / 2;
+    next->y = (box_height - 2) / 2 - 1;
 
     next->x += nextStartX;
     next->y += nextStartY;

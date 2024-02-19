@@ -75,15 +75,48 @@ Tetromino* initializeTetrominoes() {
     return tetrominoes;
 }
 
+void drawHoldTetromino(WINDOW *win, Tetromino hold) {
+    wattron(win, COLOR_PAIR(hold.type));
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            if(hold.shape[i][j] == 1) {
+                int y = hold.y + i;
+                int x = hold.x + j;
+                mvwaddch(win, y, x, ACS_CKBOARD);
+            }
+        }
+    }
+    wattroff(win, COLOR_PAIR(hold.type));
+    //wrefresh(win);
+}
+
+void drawNextTetromino(WINDOW *win, Tetromino next) {
+    wattron(win, COLOR_PAIR(next.type));
+    wattron(win, A_BOLD);
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            if (next.shape[i][j] == 1) {
+                int posY = next.y + i;
+                int posX = next.x + j;
+                mvwaddch(win, posY, posX, ACS_CKBOARD);
+            }
+        }
+    }
+    wattroff(win, A_BOLD);
+    wattroff(win, COLOR_PAIR(next.type));
+    //wrefresh(win);
+}
+
 void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int leftOffset) {
-    werase(win);
+    //werase(win);
 
     init_pair(9, COLOR_CYAN, -1);
 
     int statsWidth = box_width;
     int statsHeight = box_height - 2;
     int statsStartX = leftOffset - statsWidth - 3;
-    int statsStartY = (screen_height - statsHeight) / 2 - 8;
+    // int statsStartY = (screen_height - statsHeight) / 2 - 8;
+    int statsStartY = (screen_height - statsHeight) / 2 - 5 + box_height;
 
         // Draw the stats border
     attron(COLOR_PAIR(9));
@@ -114,14 +147,14 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
     mvwaddch(win, statsStartY + statsHeight - 1, statsStartX + statsWidth - 1, ACS_LRCORNER);
 
     // Print the score and level inside the stats border
-    mvwprintw(win, statsStartY + 1, statsStartX + 2, "Score:        %d", score);
-    mvwprintw(win, statsStartY + 2, statsStartX + 2, "Level:        %d", curentLevel);
-    mvwprintw(win, statsStartY + 3, statsStartX + 2, "Lines:        %d", totalLinesCleared);
+    mvwprintw(win, statsStartY + 1, statsStartX + 2, "Score:       %d", score);
+    mvwprintw(win, statsStartY + 2, statsStartX + 2, "Level:       %d", curentLevel);
+    mvwprintw(win, statsStartY + 3, statsStartX + 2, "Lines:       %d", totalLinesCleared);
     attroff(COLOR_PAIR(9));
 
         // Draw the next border
     int nextWidth = box_width;
-    int nextHeight = box_height;
+    int nextHeight = box_height - 1;
     nextStartX = leftOffset + screen_width + 3;
     nextStartY = (screen_height - nextHeight) / 2 - 7;
 
@@ -152,6 +185,40 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
     }
     mvwaddch(win, nextStartY + nextHeight - 1, nextStartX + nextWidth - 1, ACS_LRCORNER);
     attroff(COLOR_PAIR(9));
+
+        // Draw the hold box;
+    int holdWidth = box_width;
+    int holdHeight = box_height - 1;
+    int holdX = leftOffset - statsWidth - 3;
+    int holdY = (screen_height - nextHeight) / 2 - 7;
+
+    char hold_text[] = "Hold";
+    int hold_pos = (holdWidth / 2) - (strlen(hold_text) / 2);
+
+    attron(COLOR_PAIR(9));
+
+    mvwaddch(win, holdY, holdX, ACS_ULCORNER);
+    for (int x = holdX + 1; x < holdX + hold_pos; x++) {
+        mvwaddch(win, holdY, x, ACS_HLINE);
+    }
+    mvwaddstr(win, holdY, holdX + hold_pos, hold_text);
+    for (int x = holdX + hold_pos + strlen(hold_text); x < holdX + holdWidth - 1; x++) {
+        mvwaddch(win, holdY, x, ACS_HLINE);
+    }
+    mvwaddch(win, holdY, holdX + holdWidth - 1, ACS_URCORNER);
+
+    // Draw sides of the stats box
+    for (int y = holdY + 1; y < holdY + holdHeight - 1; y++) {
+        mvwaddch(win, y, holdX, ACS_VLINE);
+        mvwaddch(win, y, holdX + holdWidth - 1, ACS_VLINE);
+    }
+
+    // Draw bottom of the stats box
+    mvwaddch(win, holdY + holdHeight - 1, holdX, ACS_LLCORNER);
+    for (int x = holdX + 1; x < holdX + holdWidth - 1; x++) {
+        mvwaddch(win, holdY + holdHeight - 1, x, ACS_HLINE);
+    }
+    mvwaddch(win, holdY + holdHeight - 1, holdX + holdWidth - 1, ACS_LRCORNER);
 
         // Draw the game border
     // Top border
@@ -248,7 +315,6 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
 
 void drawGhostPiece(WINDOW *win, Tetromino ghost, int leftOffset) {
     wattron(win, COLOR_PAIR(ghost.type) | A_DIM); // Make the ghost less visible
-
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             if (ghost.shape[i][j] == 1) {
@@ -262,7 +328,7 @@ void drawGhostPiece(WINDOW *win, Tetromino ghost, int leftOffset) {
     wattroff(win, COLOR_PAIR(ghost.type) | A_DIM); // Turn off the dim attribute
 }
 
-void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int score, Tetromino curent, Tetromino *ghost, Tetromino next, int **cellValue) {
+void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int score, Tetromino curent, Tetromino *ghost, Tetromino next, int **cellValue, Tetromino hold) {
     // Clear the window for fresh drawing
     werase(win);
     int leftOffset = (getmaxx(win) - BOARD_WIDTH) / 2;
@@ -299,19 +365,9 @@ void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int s
     wattroff(win, COLOR_PAIR(curent.type));
 
     // Draw the next tetromino
-    wattron(win, COLOR_PAIR(next.type));
-    wattron(win, A_BOLD);
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            if (next.shape[i][j] == 1) {
-                int posY = next.y + i;
-                int posX = next.x + j;
-                mvwaddch(win, posY, posX, ACS_CKBOARD);
-            }
-        }
-    }
-    wattroff(win, A_BOLD);
-    wattroff(win, COLOR_PAIR(next.type));
+    drawNextTetromino(win, next);
+
+    drawHoldTetromino(win, hold);
 
     // Refresh the window to update the screen
     wrefresh(win);

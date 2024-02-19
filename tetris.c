@@ -88,7 +88,7 @@ bool isMoveValid(Tetromino tetromino, int** board, int newX, int newY, int BOARD
     return true;
 }
 
-bool handleUserInput(WINDOW *win, int press, Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, Tetromino *ghost, Tetromino *next, int **cellValue) {
+bool handleUserInput(WINDOW *win, int press, Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, Tetromino *ghost, Tetromino *next, int **cellValue, Tetromino *hold, bool *canHold) {
     int dirX = 0, dirY = 0;
 
     switch (press) {
@@ -96,20 +96,22 @@ bool handleUserInput(WINDOW *win, int press, Tetromino *curent, int **board, int
         case 'a':
             dirX = -1;
             break;
+
         case KEY_RIGHT:
         case 'd':
             dirX = 1;
             break;
+
         case KEY_DOWN:
         case 's':
             dirY = 1;
             score += 1;
             break;
+
         case KEY_UP:
         case 'w':
             rotateTetromino(curent->shape); // Rotate
             calculateGhostPosition(curent, board, BOARD_HEIGHT, BOARD_WIDTH, ghost);
-
 
             if (!isMoveValid(*curent, board, curent->x, curent->y, BOARD_HEIGHT, BOARD_WIDTH)) {
                 // If rotation is not valid, rotate back to original position
@@ -120,10 +122,10 @@ bool handleUserInput(WINDOW *win, int press, Tetromino *curent, int **board, int
 
             }
             break;
+
         case ' ':
             hardDropTetromino(curent, board, BOARD_HEIGHT, BOARD_WIDTH);
-
-            lockTetrominoAndUpdateBoard(win, curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score, cellValue);
+            lockTetrominoAndUpdateBoard(win, curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score, cellValue, canHold);
 
             Tetromino *tetrominoes = initializeTetrominoes();
             if (!spawnNewTetromino(curent, tetrominoes, board, BOARD_HEIGHT, BOARD_WIDTH, next)) {
@@ -131,6 +133,34 @@ bool handleUserInput(WINDOW *win, int press, Tetromino *curent, int **board, int
                 break;
             }            
             break;
+
+        case 'c':
+            if (*canHold) {
+                if (!hold->isActive) {
+                    memcpy(hold, curent, sizeof(Tetromino));
+                    hold->isActive = true;
+                    *curent = *next;
+                    Tetromino *tetrominoes = initializeTetrominoes();
+                    spawnNewTetromino(curent, tetrominoes, board, BOARD_HEIGHT, BOARD_WIDTH, next);
+
+                } else {
+                    Tetromino temp = *hold;
+                    *hold = *curent;
+                    *curent = temp;
+
+                    curent->x = BOARD_WIDTH / 2 - 2;
+                    curent->y = 0;
+
+                    hold->isActive = true;
+                }
+                hold->x = box_width - box_width / 2 + 3;
+                hold->y = BOARD_HEIGHT / 2 - 8;
+
+                //drawGame(win, board, BOARD_HEIGHT, BOARD_WIDTH, score, *curent, ghost, *next, cellValue, *hold);
+                *canHold = false;                    
+            }
+            break;
+
         default:
             break;
     }
@@ -176,8 +206,6 @@ int main() {
     init_pair(5, COLOR_RED, COLOR_BLACK); // Z
 	init_pair(6, COLOR_BLUE, COLOR_BLACK); // L
 	init_pair(7, COLOR_WHITE, COLOR_BLACK); // L rev
-    //init_pair(8, COLOR_BLACK, COLOR_BLACK);
-    // bkgd(COLOR_PAIR(8));
 
     // Get terminal dimensions
     int screen_height, screen_width;
@@ -219,6 +247,10 @@ int main() {
     bool isPaused = false;
     bool restartGame = true;
     bool gameRunning = true;
+
+    bool canHold = true;
+    Tetromino hold = {0};
+    hold.isActive = false;
 
     while (gameRunning) {
         int press = wgetch(win);
@@ -283,7 +315,7 @@ int main() {
 
         if (!isPaused) {
             // Handle user input for movement and rotation
-            bool continueGame = handleUserInput(win, press, &curent, board, BOARD_HEIGHT, BOARD_WIDTH, &ghost, &next, cellValue);
+            bool continueGame = handleUserInput(win, press, &curent, board, BOARD_HEIGHT, BOARD_WIDTH, &ghost, &next, cellValue, &hold, &canHold);
             if (!continueGame) {
                 break;
             }
@@ -297,7 +329,8 @@ int main() {
                 curent.y += 1; // Tetromino can move down, so move it
 
             } else {
-                lockTetrominoAndUpdateBoard(win, &curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score, cellValue);
+                lockTetrominoAndUpdateBoard(win, &curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score, cellValue, &canHold);
+                //canHold = true;
                 if (!spawnNewTetromino(&curent, tetrominoes, board, BOARD_HEIGHT, BOARD_WIDTH, &next)) {
                     break;
                 }
@@ -307,7 +340,7 @@ int main() {
 
         // Drawing logic
         if (!isPaused) {
-            drawGame(win, board, BOARD_HEIGHT, BOARD_WIDTH, score, curent, &ghost, next, cellValue);
+            drawGame(win, board, BOARD_HEIGHT, BOARD_WIDTH, score, curent, &ghost, next, cellValue, hold);
         }
     }
     endwin();
@@ -316,8 +349,3 @@ int main() {
 
     return 0;
 }
-
-/*
-    tetromino mai mare
-    
-*/

@@ -1,5 +1,24 @@
 #include "tetrisGameplay.h"
 
+void countdown(WINDOW *win, int screen_height, int screen_width) {
+    init_pair(9, COLOR_CYAN, -1);
+
+    for (int i = 3; i > 0; i--) {
+        werase(win);
+        wattron(win, COLOR_PAIR(9));
+        mvwprintw(win, screen_height / 2, (screen_width - 1) / 2, "%d", i);
+        wattroff(win, COLOR_PAIR(9));
+        wrefresh(win);
+        usleep(500000);
+    }
+    werase(win);
+    wattron(win, COLOR_PAIR(9));
+    mvwprintw(win, screen_height / 2, (screen_width - strlen("Starting...")) / 2, "Starting...");
+    wrefresh(win);
+    wattroff(win, COLOR_PAIR(9));
+    usleep(500000);
+}
+
 int checkCompleteLines(int **board, int BOARD_HEIGHT, int BOARD_WIDTH) {
     int completeLines = 0;
     for (int i = 0; i < BOARD_HEIGHT; i++) {
@@ -69,7 +88,7 @@ bool isMoveValid(Tetromino tetromino, int** board, int newX, int newY, int BOARD
     return true;
 }
 
-bool handleUserInput(int press, Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, Tetromino *ghost, Tetromino *next, int **cellValue) {
+bool handleUserInput(WINDOW *win, int press, Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, Tetromino *ghost, Tetromino *next, int **cellValue) {
     int dirX = 0, dirY = 0;
 
     switch (press) {
@@ -84,6 +103,7 @@ bool handleUserInput(int press, Tetromino *curent, int **board, int BOARD_HEIGHT
         case KEY_DOWN:
         case 's':
             dirY = 1;
+            score += 1;
             break;
         case KEY_UP:
         case 'w':
@@ -103,7 +123,7 @@ bool handleUserInput(int press, Tetromino *curent, int **board, int BOARD_HEIGHT
         case ' ':
             hardDropTetromino(curent, board, BOARD_HEIGHT, BOARD_WIDTH);
 
-            lockTetrominoAndUpdateBoard(curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score, cellValue);
+            lockTetrominoAndUpdateBoard(win, curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score, cellValue);
 
             Tetromino *tetrominoes = initializeTetrominoes();
             if (!spawnNewTetromino(curent, tetrominoes, board, BOARD_HEIGHT, BOARD_WIDTH, next)) {
@@ -162,6 +182,7 @@ int main() {
     // Get terminal dimensions
     int screen_height, screen_width;
     getmaxyx(win, screen_height, screen_width);
+    countdown(win, screen_height, screen_width);
     
     int BOARD_HEIGHT = screen_height - 2;
     int BOARD_WIDTH = screen_width - 56;
@@ -245,6 +266,8 @@ int main() {
 
                         lastUpdateTime = clock(); // Reset the timer
                         restartGame = false; // Reset the restart flag
+
+                        countdown(win, screen_height, screen_width);
                         clear();
                         break;
 
@@ -260,7 +283,7 @@ int main() {
 
         if (!isPaused) {
             // Handle user input for movement and rotation
-            bool continueGame = handleUserInput(press, &curent, board, BOARD_HEIGHT, BOARD_WIDTH, &ghost, &next, cellValue);
+            bool continueGame = handleUserInput(win, press, &curent, board, BOARD_HEIGHT, BOARD_WIDTH, &ghost, &next, cellValue);
             if (!continueGame) {
                 break;
             }
@@ -274,7 +297,7 @@ int main() {
                 curent.y += 1; // Tetromino can move down, so move it
 
             } else {
-                lockTetrominoAndUpdateBoard(&curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score, cellValue);
+                lockTetrominoAndUpdateBoard(win, &curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score, cellValue);
                 if (!spawnNewTetromino(&curent, tetrominoes, board, BOARD_HEIGHT, BOARD_WIDTH, &next)) {
                     break;
                 }

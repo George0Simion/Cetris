@@ -15,7 +15,7 @@ void rotateTetromino(int shape[4][4]) {
     }
 }
 
-void lockTetrominoAndUpdateBoard(Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int *score, int **cellValue) {
+void lockTetrominoAndUpdateBoard(WINDOW *win ,Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int *score, int **cellValue) {
     // Lock the current tetromino on the board
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
@@ -35,6 +35,40 @@ void lockTetrominoAndUpdateBoard(Tetromino *curent, int **board, int BOARD_HEIGH
 
     totalLinesCleared += linesCleared;
 
+    if (linesCleared != 0) {
+        char message[8];
+        int message_score = calculateScore(linesCleared);
+        switch (linesCleared) {
+            case 1:
+                strcpy(message, "Single");
+                break;
+            case 2:
+                strcpy(message, "Double");
+                break;
+            case 3:
+                strcpy(message, "Triple");
+                break;
+            case 4:
+                strcpy(message, "Tetris");
+                break;
+            default:
+                break;    
+        }
+
+        int msj_len = strlen(message);
+        int score_len = snprintf(NULL, 0, "+%d", message_score);
+        int leftOffset = (getmaxx(win) - BOARD_WIDTH) / 2;
+        int x = BOARD_WIDTH / 2 - msj_len / 2 + leftOffset;
+        int y = curent->y;
+
+        attron(COLOR_PAIR(9));
+        mvwprintw(win, y, x, "%s", message);
+        mvwprintw(win, y+1, x, "+%d", message_score);
+        attroff(COLOR_PAIR(9));
+        wrefresh(win);
+        usleep(200000);
+    }
+    
     if (totalLinesCleared / 10 > curentLevel - 1) {
         curentLevel = totalLinesCleared / 10 + 1;
     }
@@ -51,6 +85,7 @@ void hardDropTetromino(Tetromino *curent, int **board, int BOARD_HEIGHT, int BOA
         dropDistance++;
     }
 
+    score += 2 * dropDistance;
     curent->y += dropDistance;
 }
 

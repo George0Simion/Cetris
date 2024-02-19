@@ -78,13 +78,15 @@ Tetromino* initializeTetrominoes() {
 void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int leftOffset) {
     werase(win);
 
+    init_pair(9, COLOR_CYAN, -1);
+
     int statsWidth = box_width;
     int statsHeight = box_height - 2;
     int statsStartX = leftOffset - statsWidth - 3;
     int statsStartY = (screen_height - statsHeight) / 2 - 8;
 
         // Draw the stats border
-    //attron(COLOR_PAIR(1));
+    attron(COLOR_PAIR(9));
     char stats_text[] = "Stats";
     int stats_pos = (statsWidth / 2) - (strlen(stats_text) / 2);
 
@@ -115,6 +117,7 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
     mvwprintw(win, statsStartY + 1, statsStartX + 2, "Score:        %d", score);
     mvwprintw(win, statsStartY + 2, statsStartX + 2, "Level:        %d", curentLevel);
     mvwprintw(win, statsStartY + 3, statsStartX + 2, "Lines:        %d", totalLinesCleared);
+    attroff(COLOR_PAIR(9));
 
         // Draw the next border
     int nextWidth = box_width;
@@ -125,6 +128,7 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
     char next_text[] = "Next";
     int next_pos = (nextWidth / 2) - (strlen(next_text) / 2);
 
+    attron(COLOR_PAIR(9));
     mvwaddch(win, nextStartY, nextStartX, ACS_ULCORNER);
     for (int x = nextStartX + 1; x < nextStartX + next_pos; x++) {
         mvwaddch(win, nextStartY, x, ACS_HLINE);
@@ -147,11 +151,14 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
         mvwaddch(win, nextStartY + nextHeight - 1, x, ACS_HLINE);
     }
     mvwaddch(win, nextStartY + nextHeight - 1, nextStartX + nextWidth - 1, ACS_LRCORNER);
+    attroff(COLOR_PAIR(9));
 
         // Draw the game border
     // Top border
     char score_text[7] = "Cetris";
     int score_pos = (screen_width / 2) - (strlen(score_text) / 2);
+
+    attron(COLOR_PAIR(9));
     mvaddstr(0, leftOffset + score_pos, score_text);
     mvaddch(0, leftOffset, ACS_ULCORNER);
     for (int x = 1; x < screen_width - 1; x++) {
@@ -173,7 +180,7 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
         mvaddch(screen_height - 1, x + leftOffset, ACS_HLINE);
     }
     mvaddch(screen_height - 1, leftOffset + screen_width - 1, ACS_LRCORNER);
-    //attroff(COLOR_PAIR(1));
+    attroff(COLOR_PAIR(9));
 
         // Draw the help border
     int helpStartY = nextStartY + nextHeight + 2;
@@ -183,7 +190,7 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
     char help_text[] = "Help";
     int help_pos = (helpWidth / 2) - (strlen(help_text) / 2);
 
-    // Draw the help border similar to how you drew the "Stats" and "Next" sections
+    attron(COLOR_PAIR(9));
     mvwaddch(win, helpStartY, nextStartX, ACS_ULCORNER);
     for (int x = nextStartX + 1; x < nextStartX + help_pos; x++) {
         mvwaddch(win, helpStartY, x, ACS_HLINE);
@@ -206,12 +213,36 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
         mvwaddch(win, helpStartY + helpHeight - 1, x, ACS_HLINE);
     }
     mvwaddch(win, helpStartY + helpHeight - 1, nextStartX + helpWidth - 1, ACS_LRCORNER);
+    attroff(COLOR_PAIR(9));
 
     // Print the controls inside the help border
-    char* controls[] = {"Left: <", "Right: >", "Down: v", "Rotate: ^", "Drop: space", "Pause: p", "Restart: p+r", "Quit: esc"};
+    char* controls[] = {
+        "Left:       a, <",
+        "Right:      d, >",
+        "Down:       s, v",
+        "Rotate:     w, ^",
+        "Drop:      space",
+        "Pause:         p",
+        "Restart:     p+r",
+        "Quit:        esc"
+    };
+
     int controlStartY = helpStartY + 1;
     for (int i = 0; i < sizeof(controls) / sizeof(controls[0]); i++) {
+        attron(COLOR_PAIR(9));
         mvwprintw(win, controlStartY + i, nextStartX + 2, "%s", controls[i]);
+        attroff(COLOR_PAIR(9));
+    }
+
+        // Draw the grid
+    int gridX = leftOffset;
+    int gridY = 0;
+    for (int y = 1; y < screen_height - 1; y++) {
+        for (int x = 1 + leftOffset; x < screen_width - 1 + leftOffset; x += 2) {
+            attron(COLOR_PAIR(9) | A_DIM);
+            mvwaddch(win, y, x, '.');
+            attroff(COLOR_PAIR(9)| A_DIM);
+        }
     }
 }
 
@@ -244,7 +275,9 @@ void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int s
         for (int x = 0; x < BOARD_WIDTH; x++) {
             if (board[y][x] == 1) {
                 wattron(win, COLOR_PAIR(cellValue[y][x]));
+                wattron(win, A_BOLD);
                 mvwaddch(win, y+1, x+1+leftOffset, ACS_CKBOARD);
+                wattroff(win, A_BOLD);
                 wattroff(win, COLOR_PAIR(cellValue[y][x]));
             }
         }
@@ -252,6 +285,7 @@ void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int s
     
     // Draw the current tetromino
     wattron(win, COLOR_PAIR(curent.type));
+    wattron(win, A_BOLD);
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             if (curent.shape[i][j] == 1) {
@@ -261,10 +295,12 @@ void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int s
             }
         }
     }
+    wattroff(win, A_BOLD);
     wattroff(win, COLOR_PAIR(curent.type));
 
     // Draw the next tetromino
     wattron(win, COLOR_PAIR(next.type));
+    wattron(win, A_BOLD);
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             if (next.shape[i][j] == 1) {
@@ -274,6 +310,7 @@ void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int s
             }
         }
     }
+    wattroff(win, A_BOLD);
     wattroff(win, COLOR_PAIR(next.type));
 
     // Refresh the window to update the screen

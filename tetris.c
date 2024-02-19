@@ -74,15 +74,19 @@ bool handleUserInput(int press, Tetromino *curent, int **board, int BOARD_HEIGHT
 
     switch (press) {
         case KEY_LEFT:
+        case 'a':
             dirX = -1;
             break;
         case KEY_RIGHT:
+        case 'd':
             dirX = 1;
             break;
         case KEY_DOWN:
+        case 's':
             dirY = 1;
             break;
         case KEY_UP:
+        case 'w':
             rotateTetromino(curent->shape); // Rotate
             calculateGhostPosition(curent, board, BOARD_HEIGHT, BOARD_WIDTH, ghost);
 
@@ -152,8 +156,8 @@ int main() {
     init_pair(5, COLOR_RED, COLOR_BLACK); // Z
 	init_pair(6, COLOR_BLUE, COLOR_BLACK); // L
 	init_pair(7, COLOR_WHITE, COLOR_BLACK); // L rev
-    init_pair(8, COLOR_CYAN, COLOR_BLACK);
-    bkgd(COLOR_PAIR(8));
+    //init_pair(8, COLOR_BLACK, COLOR_BLACK);
+    // bkgd(COLOR_PAIR(8));
 
     // Get terminal dimensions
     int screen_height, screen_width;
@@ -204,10 +208,12 @@ int main() {
 
             if (isPaused) {
                 clear();
+                attron(COLOR_PAIR(1));
                 mvprintw(LINES / 2 - 1, (COLS - strlen("Game Paused.")) / 2, "Game Paused.");
                 mvprintw(LINES / 2, (COLS - strlen("Press 'p' to resume")) / 2, "Press 'p' to resume");
                 mvprintw(LINES / 2 + 1, (COLS - strlen("Press 'r' to restart")) / 2, "Press 'r' to restart");
                 mvprintw(LINES / 2 + 2, (COLS - strlen("Press 'esc' to exit")) / 2, "Press 'esc' to exit");
+                attroff(COLOR_PAIR(1));
                 refresh();
 
                 while (true) {
@@ -235,7 +241,7 @@ int main() {
 
                         next = tetrominoes[rand() % 7]; // Re-selct the next tetromino
                         next.x = screen_width - box_width + 5;
-                        next.y = BOARD_HEIGHT / 2 - 4;
+                        next.y = BOARD_HEIGHT / 2 - 8;
 
                         lastUpdateTime = clock(); // Reset the timer
                         restartGame = false; // Reset the restart flag

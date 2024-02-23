@@ -107,6 +107,45 @@ void drawNextTetromino(WINDOW *win, Tetromino next) {
     //wrefresh(win);
 }
 
+void printWraped(int startY, int screenwidth, const char* text) {
+    int textLength = strlen(text);
+    int maxLineLength = screenwidth - 3; // Adjust based on desired padding
+
+    int start = 0;
+    while (start < textLength) {
+        // Calculate the length of the next substring
+        int lengthOfSubstring = maxLineLength;
+        if (start + lengthOfSubstring > textLength) {
+            lengthOfSubstring = textLength - start;
+        }
+
+        // Ensure we don't split words in half;
+        // If we're not at the end of the string, find the last space in the substring
+        if (start + lengthOfSubstring < textLength) {
+            int lastSpace = lengthOfSubstring;
+            while (lastSpace > 0 && text[start + lastSpace] != ' ') {
+                lastSpace--;
+            }
+            if (lastSpace > 0) { // Found a space, so adjust the substring length
+                lengthOfSubstring = lastSpace;
+            }
+        }
+
+        // Print the substring
+        char line[maxLineLength + 1];
+        strncpy(line, text + start, lengthOfSubstring);
+        line[lengthOfSubstring] = '\0'; // Null-terminate the string
+
+        mvprintw(startY++, (COLS - strlen(line)) / 2, "%s", line);
+
+        start += lengthOfSubstring;
+        // Skip any leading space in the next part of the string
+        if (text[start] == ' ') {
+            start++;
+        }
+    }
+}
+
 void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int leftOffset) {
     //werase(win);
 
@@ -252,7 +291,7 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
         // Draw the help border
     int helpStartY = nextStartY + nextHeight + 2;
     int helpWidth = nextWidth;
-    int helpHeight = 11;
+    int helpHeight = 12;
 
     char help_text[] = "Help";
     int help_pos = (helpWidth / 2) - (strlen(help_text) / 2);
@@ -290,6 +329,7 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
         "Rotate:     w, ^",
         "Drop:      space",
         "Hold:          c",
+        "Mouse:         m",
         "Pause:         p",
         "Restart:     p+r",
         "Quit:        esc"

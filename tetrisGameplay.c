@@ -35,6 +35,7 @@ void lockTetrominoAndUpdateBoard(WINDOW *win ,Tetromino *curent, int **board, in
 
     totalLinesCleared += linesCleared;
 
+    // Message on the screen if lines cleared
     if (linesCleared != 0) {
         char message[8];
         int message_score = calculateScore(linesCleared);
@@ -69,6 +70,7 @@ void lockTetrominoAndUpdateBoard(WINDOW *win ,Tetromino *curent, int **board, in
         usleep(200000);
     }
     
+    // Level logic
     if (totalLinesCleared / 10 > curentLevel - 1) {
         curentLevel = totalLinesCleared / 10 + 1;
     }
@@ -84,9 +86,11 @@ void lockTetrominoAndUpdateBoard(WINDOW *win ,Tetromino *curent, int **board, in
 void hardDropTetromino(Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH) {
     int dropDistance = 0;
     while (isMoveValid(*curent, board, curent->x, curent->y + dropDistance + 1, BOARD_HEIGHT, BOARD_WIDTH)) {
+        // Calculating drop distance
         dropDistance++;
     }
 
+    // Score and y updates
     score += 2 * dropDistance;
     curent->y += dropDistance;
 }

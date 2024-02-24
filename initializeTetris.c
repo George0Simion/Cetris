@@ -87,7 +87,8 @@ void drawHoldTetromino(WINDOW *win, Tetromino hold) {
         }
     }
     wattroff(win, COLOR_PAIR(hold.type));
-    //wrefresh(win);
+
+    /* Drawing the hold tetromino */
 }
 
 void drawNextTetromino(WINDOW *win, Tetromino next) {
@@ -104,7 +105,8 @@ void drawNextTetromino(WINDOW *win, Tetromino next) {
     }
     wattroff(win, A_BOLD);
     wattroff(win, COLOR_PAIR(next.type));
-    //wrefresh(win);
+    
+    /* Drawing the next tetromino */
 }
 
 void printWraped(int startY, int screenwidth, const char* text) {
@@ -144,11 +146,12 @@ void printWraped(int startY, int screenwidth, const char* text) {
             start++;
         }
     }
+
+    /* Function for writing the mouse instrunctions, based on scren width */
 }
 
-void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int leftOffset) {
-    //werase(win);
-
+void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int leftOffset, bool *mouseEnable) {
+    /* Drawing everything */
     init_pair(9, COLOR_CYAN, -1);
 
     int statsWidth = box_width;
@@ -337,9 +340,24 @@ void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int l
 
     int controlStartY = helpStartY + 1;
     for (int i = 0; i < sizeof(controls) / sizeof(controls[0]); i++) {
-        attron(COLOR_PAIR(9));
-        mvwprintw(win, controlStartY + i, nextStartX + 2, "%s", controls[i]);
-        attroff(COLOR_PAIR(9));
+        if (i != 6) {
+            attron(COLOR_PAIR(9));
+            mvwprintw(win, controlStartY + i, nextStartX + 2, "%s", controls[i]);
+            attroff(COLOR_PAIR(9));
+        } else {
+            if(*mouseEnable == false) {
+                attron(COLOR_PAIR(9));
+                mvwprintw(win, controlStartY + i, nextStartX + 2, "%s", controls[i]);
+                attroff(COLOR_PAIR(9));
+            } else {
+                init_pair(10, COLOR_YELLOW, -1);
+                attron(COLOR_PAIR(10));
+                mvwprintw(win, controlStartY + i, nextStartX + 2, "%s", controls[i]);
+                attroff(COLOR_PAIR(10));
+            }
+            
+        }
+        
     }
 
         // Draw the grid
@@ -367,14 +385,16 @@ void drawGhostPiece(WINDOW *win, Tetromino ghost, int leftOffset) {
         }
     }
     wattroff(win, COLOR_PAIR(ghost.type) | A_DIM); // Turn off the dim attribute
+
+    /* Drawing the ghost piece */
 }
 
-void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int score, Tetromino curent, Tetromino *ghost, Tetromino next, int **cellValue, Tetromino hold) {
+void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int score, Tetromino curent, Tetromino *ghost, Tetromino next, int **cellValue, Tetromino hold, bool *mouseEnable) {
     // Clear the window for fresh drawing
     werase(win);
     int leftOffset = (getmaxx(win) - BOARD_WIDTH) / 2;
 
-    drawBordersAndScore(win, BOARD_WIDTH + 2, BOARD_HEIGHT + 2, leftOffset);
+    drawBordersAndScore(win, BOARD_WIDTH + 2, BOARD_HEIGHT + 2, leftOffset, mouseEnable);
     drawGhostPiece(win, *ghost, leftOffset);
 
     // Draw the board with locked tetrominoes

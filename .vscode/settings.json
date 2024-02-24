@@ -3,5 +3,6 @@
         "string.h": "c",
         "stdio.h": "c",
         "ncurses.h": "c"
-    }
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }

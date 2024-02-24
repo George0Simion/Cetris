@@ -17,7 +17,7 @@ void freeTetromino(int **board, int **cellValue, int BOARD_HEIGHT, Tetromino *te
 
 void countdown(WINDOW *win, int screen_height, int screen_width) {
     init_pair(9, COLOR_CYAN, -1);
-
+    // Simple countdown
     for (int i = 3; i > 0; i--) {
         werase(win);
         wattron(win, COLOR_PAIR(9));
@@ -159,7 +159,7 @@ bool handleUserInput(WINDOW *win, long long press, Tetromino *curent, int **boar
             break;
 
         case KEY_UP:
-        case 'w':
+        case 'w': // Rotate
             rotateTetromino(curent->shape); // Rotate
             calculateGhostPosition(curent, board, BOARD_HEIGHT, BOARD_WIDTH, ghost);
 
@@ -173,7 +173,7 @@ bool handleUserInput(WINDOW *win, long long press, Tetromino *curent, int **boar
             }
             break;
 
-        case ' ':
+        case ' ': // Hard-drop
             hardDropTetromino(curent, board, BOARD_HEIGHT, BOARD_WIDTH);
             lockTetrominoAndUpdateBoard(win, curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score, cellValue, canHold);
 
@@ -183,9 +183,9 @@ bool handleUserInput(WINDOW *win, long long press, Tetromino *curent, int **boar
             }
             break;
 
-        case 'c':
+        case 'c': // Hold
             if (*canHold) {
-                if (!hold->isActive) {
+                if (!hold->isActive) { // Nothing is in hold
                     memcpy(hold, curent, sizeof(Tetromino));
                     hold->isActive = true;
                     *curent = *next;
@@ -194,7 +194,7 @@ bool handleUserInput(WINDOW *win, long long press, Tetromino *curent, int **boar
                         break;
                     }
 
-                } else {
+                } else { // Something is in hold
                     Tetromino temp = *hold;
                     *hold = *curent;
                     *curent = temp;
@@ -215,7 +215,7 @@ bool handleUserInput(WINDOW *win, long long press, Tetromino *curent, int **boar
             break;
     }
     
-    if (press == '\e') {
+    if (press == '\e') { // Exit
         endwin();
         return false;
     }
@@ -308,11 +308,18 @@ int main() {
     bool mouseEnable = false;
 
     // Mouse initializations
-    mousemask(REPORT_MOUSE_POSITION, NULL);
+    mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL);
     MEVENT event;
-    
+
+    // Timing mechanism variables
+    clock_t lastMousePressTime = clock(); // Initialize with the current time
+    double mouseInputTimeout = 0.45;
+    bool mouseButtonPressed = false;
+
     //  Start
     countdownStart(win, screen_height, screen_width);
+
+    static int lastMouseY = -1;
 
     while (gameRunning) {
         int press = wgetch(win);
@@ -322,62 +329,71 @@ int main() {
             mouseEnable = !mouseEnable;
             if (mouseEnable) {
                 flushinp();
-                printf("\033[?1003h\n");
             } else {
-                printf("\033[?1003l\n");
                 flushinp();
+                printf("\033[?1003l\n");
             }
         }
 
         // Mouse logic
         if (mouseEnable && press == KEY_MOUSE) {
-            if (getmouse(&event) == OK) {
-                if (event.bstate & REPORT_MOUSE_POSITION) {
-                    // Move tetromino based on mouse position
-                    int newX = calculateBoardPosition(event.x, getmaxx(win), BOARD_WIDTH);
-                    if (isMoveValid(curent, board, newX, curent.y, BOARD_HEIGHT, BOARD_WIDTH)) {
-                        curent.x = newX;
-                    }
-                    
-                } else if (event.bstate & BUTTON1_RELEASED) {
-                    // Hard-drop if right-click
-                    hardDropTetromino(&curent, board, BOARD_HEIGHT, BOARD_WIDTH);
-                    lockTetrominoAndUpdateBoard(win, &curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score, cellValue, &canHold);
-                    if (!spawnNewTetromino(&curent, tetrominoes, board, BOARD_HEIGHT, BOARD_WIDTH, &next)) {
-                        // Game Over condition
-                        break;
-                    }
-
-                } else if (event.bstate & (BUTTON3_CLICKED | BUTTON3_PRESSED)) {
-                    rotateTetromino(curent.shape); // Rotate
-                    calculateGhostPosition(&curent, board, BOARD_HEIGHT, BOARD_WIDTH, &ghost);
-                    if (!isMoveValid(curent, board, curent.x, curent.y, BOARD_HEIGHT, BOARD_WIDTH)) {
-                        // If rotation is not valid, rotate back to original position
-                        rotateTetromino(curent.shape); // Rotate 3 more times to revert
-                        rotateTetromino(curent.shape);
-                        rotateTetromino(curent.shape);
-                        calculateGhostPosition(&curent, board, BOARD_HEIGHT, BOARD_WIDTH, &ghost);
-                    }
-                }
-                flushinp();
-
-                // Trying to get rid of the buggy behavior when now clicking anything
-                if (!(event.bstate & REPORT_MOUSE_POSITION)){
-                    continue;
-                }
-                if(!(event.bstate & (BUTTON3_CLICKED | BUTTON3_PRESSED))) {
-                    continue;
-                }
+            // Activating terminal interaction only in the game box
+            int leftOffset = (getmaxx(win) - BOARD_WIDTH) / 2;
+            if (event.x >= leftOffset && event.x < leftOffset + BOARD_WIDTH - 1 && event.y > 1 && event.y < screen_height) {
+                printf("\033[?1003h\n");
             }
 
-            // Tetromino still falling when clicks are being pressed
-            clock_t currentTime = clock();
-            double timeSinceLastUpdate = (double)(currentTime - lastUpdateTime) / CLOCKS_PER_SEC;
-            if (timeSinceLastUpdate >= dropInterval) {
-                if (isMoveValid(curent, board, curent.x, curent.y + 1, BOARD_HEIGHT, BOARD_WIDTH)) {
-                    curent.y += 1; // Tetromino can move down, so move it
+            if (getmouse(&event) == OK) {
+                // Timing mechanism for hard-drop and rotate bug
+                clock_t currentTime = clock();
+                double elapsedSeconds = (double)(currentTime - lastMousePressTime) / CLOCKS_PER_SEC;
+                if (event.bstate & REPORT_MOUSE_POSITION) {
+                    lastMousePressTime = currentTime;
                 }
-                lastUpdateTime = currentTime;
+
+                if(elapsedSeconds <= mouseInputTimeout) {
+
+                    if (event.bstate & REPORT_MOUSE_POSITION) {                        
+                        // Move tetromino based on mouse position
+                        int newX = calculateBoardPosition(event.x, getmaxx(win), BOARD_WIDTH);
+                        if (isMoveValid(curent, board, newX, curent.y, BOARD_HEIGHT, BOARD_WIDTH)) {
+                            curent.x = newX; // New x
+                            mvcur(event.y, event.x, curent.y, curent.x); // Moving cursor "internally" for the vertical movement bug
+                        }
+                        mouseButtonPressed = true;
+                        
+                    } else if (event.bstate & BUTTON1_RELEASED) {
+                        // Hard-drop if left-click release
+                        hardDropTetromino(&curent, board, BOARD_HEIGHT, BOARD_WIDTH);
+                        lockTetrominoAndUpdateBoard(win, &curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score, cellValue, &canHold);
+
+                        if (!spawnNewTetromino(&curent, tetrominoes, board, BOARD_HEIGHT, BOARD_WIDTH, &next)) {
+                            // Game Over condition
+                            break;
+                        }
+                        mouseButtonPressed = false;
+                    }
+
+                    if (event.bstate & (BUTTON3_CLICKED | BUTTON3_PRESSED)) {
+                        // Rotate if right-click
+                        rotateTetromino(curent.shape);
+                        calculateGhostPosition(&curent, board, BOARD_HEIGHT, BOARD_WIDTH, &ghost);
+                        if (!isMoveValid(curent, board, curent.x, curent.y, BOARD_HEIGHT, BOARD_WIDTH)) {
+                            // If rotation is not valid, rotate back to original position
+                            rotateTetromino(curent.shape); // Rotate 3 more times to revert
+                            rotateTetromino(curent.shape);
+                            rotateTetromino(curent.shape);
+                            calculateGhostPosition(&curent, board, BOARD_HEIGHT, BOARD_WIDTH, &ghost);
+                        }
+                    }
+                    // Disabling terminal interaction if nothing is pressed
+                    // This way the mouse can be moved when nothing is clicked without the tetromino freezing
+                    if (mouseButtonPressed == false) {
+                        fflush(stdout);
+                        printf("\033[?1003l\n");
+                        flushinp();
+                    }
+                }
             }
         }
 
@@ -388,7 +404,7 @@ int main() {
 
             if (isPaused) {
                 clear();
-                char mouseLogic[] = "Mouse logic: Right-click and drag the piece to the desired position, release the click for hard-drop. Left-click for rotate.";
+                char mouseLogic[] = "Mouse logic: Right-click and drag the piece to the desired position, release the click to hard-drop. Left-click to rotate.";
                 attron(COLOR_PAIR(9));
                 mvprintw(LINES / 2 - 2, (COLS - strlen("Game Paused.")) / 2, "Game Paused.");
                 mvprintw(LINES / 2 - 1, (COLS - strlen("Press 'p' to resume")) / 2, "Press 'p' to resume");
@@ -442,7 +458,7 @@ int main() {
             }
         }
 
-        // Not pause
+        // No pause
         if (!isPaused) {
             // Handle user input for movement and rotation
             bool continueGame = handleUserInput(win, press, &curent, board, BOARD_HEIGHT, BOARD_WIDTH, &ghost, &next, cellValue, &hold, &canHold, tetrominoes);
@@ -461,7 +477,6 @@ int main() {
 
             } else {
                 lockTetrominoAndUpdateBoard(win, &curent, board, BOARD_HEIGHT, BOARD_WIDTH, &score, cellValue, &canHold);
-
                 if (!spawnNewTetromino(&curent, tetrominoes, board, BOARD_HEIGHT, BOARD_WIDTH, &next)) {
                     break;
                 }
@@ -471,19 +486,12 @@ int main() {
 
         // Drawing logic
         if (!isPaused) {
-            drawGame(win, board, BOARD_HEIGHT, BOARD_WIDTH, score, curent, &ghost, next, cellValue, hold);
+            drawGame(win, board, BOARD_HEIGHT, BOARD_WIDTH, score, curent, &ghost, next, cellValue, hold, &mouseEnable);
         }
     }
-    endwin();
+    endwin(); // Ending ncurses
     freeTetromino(board, cellValue, BOARD_HEIGHT, tetrominoes);
     printf("Game over! Your score: %d\n", score);
     
     return 0;
 }
-
-//if (getmouse(&event) == 0) {
-            // //Move tetromino based on mouse position
-            // int newX = calculateBoardPosition(event.x, getmaxx(win), BOARD_WIDTH);
-            // if (newX != -1 && isMoveValid(curent, board, newX, curent.y, BOARD_HEIGHT, BOARD_WIDTH)) {
-            //     curent.x = newX;
-            // } 

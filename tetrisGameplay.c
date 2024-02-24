@@ -13,6 +13,7 @@ void rotateTetromino(int shape[4][4]) {
             shape[i][j] = newTetromino[i][j];
         }
     }
+    /* Simple rotation */
 }
 
 void lockTetrominoAndUpdateBoard(WINDOW *win ,Tetromino *curent, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int *score, int **cellValue, bool *canHold) {

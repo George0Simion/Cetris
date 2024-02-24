@@ -25,10 +25,10 @@ typedef struct {
 
 Tetromino* initializeTetrominoes();
 void printWraped(int startY, int screen_width, const char* text);
-void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int leftOffset);
+void drawBordersAndScore(WINDOW *win, int screen_width, int screen_height, int leftOffset, bool *mouseEnable);
 void drawGhostPiece(WINDOW *win, Tetromino ghost, int leftOffset);
 void drawHoldTetromino(WINDOW *win, Tetromino hold);
-void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int score, Tetromino curent, Tetromino *ghost, Tetromino next, int **cellValue, Tetromino hold);
+void drawGame(WINDOW *win, int **board, int BOARD_HEIGHT, int BOARD_WIDTH, int score, Tetromino curent, Tetromino *ghost, Tetromino next, int **cellValue, Tetromino hold, bool *mouseEnable);
 void drawNextTetromino(WINDOW *win, Tetromino next);
 int checkCompleteLines(int **board, int BOARD_HEIGHT, int BOARD_WIDTH);
 int calculateScore(int linesCleared);

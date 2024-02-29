@@ -3,7 +3,7 @@
   Cetris is a modern take on the classic Tetris game, implemented in C with ncurses for terminal-based UI. It combines the beloved traditional gameplay with added mouse control for a refreshing experience. Dive into the world of falling tetrominos, clear lines, and challenge yourself with increasing levels of difficulty!
 
 <p float="left">
-  <img src="https://github.com/George0Simion/Cetris/assets/149818276/1bb765a0-8752-409d-9065-cea7ce229c72" width="400" />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="https://github.com/George0Simion/Cetris/assets/149818276/1bb765a0-8752-409d-9065-cea7ce229c72" width="400" />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <img src="https://github.com/George0Simion/Cetris---A-Tetris-Clone/assets/149818276/dc5c744c-4503-4cdc-9f2b-2fe1ab06f174" width="400" /> 
 </p>
 
